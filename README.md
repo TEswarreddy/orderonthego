@@ -10,8 +10,8 @@ This is required for both backend & frontend.
 ✔ Choose LTS version  
 ✔ After install, verify:
 
-node -v  
-npm -v  
+  node -v  
+  npm -v  
 
 You should see version numbers.
 

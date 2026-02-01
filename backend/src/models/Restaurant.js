@@ -1,0 +1,18 @@
+const mongoose = require("mongoose");
+
+const restaurantSchema = new mongoose.Schema(
+  {
+    ownerId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
+    title: { type: String, required: true },
+    address: { type: String, required: true },
+    mainImg: String,
+    menu: Array,
+  },
+  { timestamps: true }
+);
+
+module.exports = mongoose.model("Restaurant", restaurantSchema);

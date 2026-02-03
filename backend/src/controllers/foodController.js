@@ -1,4 +1,6 @@
 const Food = require("../models/Food");
+const Restaurant = require("../models/Restaurant");
+
 
 // Add food item (Restaurant only)
 exports.addFood = async (req, res) => {

@@ -1,14 +1,62 @@
-
-import './App.css'
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import Login from "./pages/auth/Login";
+import Register from "./pages/auth/Register";
+import Home from "./pages/user/Home";
+import Cart from "./pages/user/Cart";
+import Orders from "./pages/user/Orders";
+import AdminDashboard from "./pages/admin/Dashboard";
+import RestaurantDashboard from "./pages/restaurant/Dashboard";
+import ProtectedRoute from "./components/ProtectedRoute";
+import { AuthProvider } from "./context/AuthProvider";
 
 function App() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-black text-white text-4xl font-bold">
-      Tailwind v4 is Working 🚀
-    </div>
-  )
+    <AuthProvider>
+      <BrowserRouter>
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+
+          <Route
+            path="/cart"
+            element={
+              <ProtectedRoute role="USER">
+                <Cart />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/orders"
+            element={
+              <ProtectedRoute role="USER">
+                <Orders />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/restaurant"
+            element={
+              <ProtectedRoute role="RESTAURANT">
+                <RestaurantDashboard />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/admin"
+            element={
+              <ProtectedRoute role="ADMIN">
+                <AdminDashboard />
+              </ProtectedRoute>
+            }
+          />
+        </Routes>
+      </BrowserRouter>
+    </AuthProvider>
+  );
 }
 
-export default App
-
-
+export default App;

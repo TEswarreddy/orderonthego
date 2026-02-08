@@ -8,6 +8,11 @@ import Orders from "./pages/user/Orders";
 import Payment from "./pages/user/Payment";
 import AdminDashboard from "./pages/admin/Dashboard";
 import RestaurantDashboard from "./pages/restaurant/Dashboard";
+import About from "./pages/info/About";
+import HelpCenter from "./pages/info/HelpCenter";
+import TermsOfService from "./pages/info/TermsOfService";
+import PrivacyPolicy from "./pages/info/PrivacyPolicy";
+import Faqs from "./pages/info/Faqs";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { AuthProvider } from "./context/AuthProvider";
 import Navbar from "./components/Navbar";
@@ -25,6 +30,11 @@ function App() {
           <Route path="/food/:foodId" element={<FoodDetail />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
+          <Route path="/about" element={<About />} />
+          <Route path="/help" element={<HelpCenter />} />
+          <Route path="/terms" element={<TermsOfService />} />
+          <Route path="/privacy" element={<PrivacyPolicy />} />
+          <Route path="/faqs" element={<Faqs />} />
 
           <Route
             path="/cart"

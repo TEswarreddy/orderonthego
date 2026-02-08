@@ -8,11 +8,13 @@ import AdminDashboard from "./pages/admin/Dashboard";
 import RestaurantDashboard from "./pages/restaurant/Dashboard";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { AuthProvider } from "./context/AuthProvider";
+import Navbar from "./components/Navbar";
 
 function App() {
   return (
     <AuthProvider>
       <BrowserRouter>
+        <Navbar />
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<Login />} />

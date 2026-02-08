@@ -11,13 +11,16 @@ import RestaurantDashboard from "./pages/restaurant/Dashboard";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { AuthProvider } from "./context/AuthProvider";
 import Navbar from "./components/Navbar";
+import Footer from "./components/Footer";
 
 function App() {
   return (
     <AuthProvider>
       <BrowserRouter>
-        <Navbar />
-        <Routes>
+        <div className="flex flex-col min-h-screen">
+          <Navbar />
+          <main className="flex-1">
+            <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/food/:foodId" element={<FoodDetail />} />
           <Route path="/login" element={<Login />} />
@@ -68,6 +71,9 @@ function App() {
             }
           />
         </Routes>
+          </main>
+          <Footer />
+        </div>
       </BrowserRouter>
     </AuthProvider>
   );

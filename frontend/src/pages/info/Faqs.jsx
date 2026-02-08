@@ -5,125 +5,114 @@ const Faqs = () => {
   const faqs = [
     {
       question: "Can I change my order after placing it?",
-      answer: "Yes. You can edit items or delivery notes before the restaurant confirms prep.",
+      answer:
+        "Yes. You can modify items or delivery instructions until the restaurant begins preparation.",
     },
     {
       question: "What if my food arrives late or missing?",
-      answer: "Report it in the app and our support team will credit or resend quickly.",
+      answer:
+        "Report the issue directly from the app. Our support team will quickly resolve it with a refund or replacement.",
     },
     {
       question: "Do you offer contactless delivery?",
-      answer: "Yes. Toggle contactless delivery at checkout and add drop-off instructions.",
+      answer:
+        "Absolutely. Enable contactless delivery during checkout and add drop-off instructions.",
     },
     {
       question: "How do refunds work?",
-      answer: "Refunds go back to the original payment method and typically post in 3 to 5 days.",
+      answer:
+        "Refunds are processed to your original payment method and usually reflect within 3–5 business days.",
     },
     {
       question: "Can I reorder a previous meal?",
-      answer: "Yes. Use the My Orders page to reorder favorites in a single tap.",
+      answer:
+        "Yes. Visit the My Orders page and reorder your favorites with a single tap.",
     },
   ];
 
-  const [openIndex, setOpenIndex] = useState(0);
+  const [openIndex, setOpenIndex] = useState(null);
 
   return (
-    <div className="min-h-screen bg-[radial-gradient(circle_at_top,_rgba(251,146,60,0.15),_transparent_55%),radial-gradient(circle_at_20%_35%,_rgba(56,189,248,0.18),_transparent_45%),linear-gradient(135deg,_#fff7ed_0%,_#ffffff_45%,_#fefce8_100%)] font-body text-slate-900">
-      <section className="container mx-auto px-6 py-16">
-        <div className="grid gap-10 lg:grid-cols-[1.05fr_0.95fr] lg:items-center">
-          <div className="relative max-w-xl">
-            <div className="absolute -top-10 -left-14 h-24 w-24 rounded-full bg-orange-200/50 blur-3xl" />
-            <p className="text-sm uppercase tracking-[0.35em] text-orange-600">FAQs</p>
-            <h1 className="mt-3 text-4xl font-display font-semibold sm:text-5xl">
-              Quick answers, ready to go.
-            </h1>
-            <p className="mt-4 text-base text-slate-600 sm:text-lg">
-              Browse the most common questions about ordering, delivery, and account
-              settings. You can also reach the team anytime.
-            </p>
-            <div className="mt-6 flex flex-wrap gap-2">
-              {["Orders", "Payments", "Delivery", "Account"].map((tag) => (
-                <span
-                  key={tag}
-                  className="rounded-full border border-white/60 bg-white/70 px-4 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-slate-600 shadow-sm"
-                >
-                  {tag}
-                </span>
-              ))}
-            </div>
-          </div>
+    <section className="relative overflow-hidden bg-gradient-to-br from-orange-50 via-white to-yellow-50 dark:from-slate-900 dark:via-slate-950 dark:to-slate-900">
+      {/* Decorative blobs */}
+      <div className="pointer-events-none absolute -top-32 -left-32 h-96 w-96 rounded-full bg-orange-300/30 blur-3xl" />
+      <div className="pointer-events-none absolute -bottom-32 -right-32 h-96 w-96 rounded-full bg-sky-300/30 blur-3xl" />
 
-          <div className="rounded-[32px] border border-white/70 bg-white/80 p-7 shadow-xl backdrop-blur">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs uppercase tracking-[0.3em] text-slate-500">
-                  Support response
-                </p>
-                <p className="mt-2 text-3xl font-display font-semibold text-slate-900">
-                  Under 3 min
-                </p>
-              </div>
-              <div className="rounded-2xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white">
-                Live daily
-              </div>
-            </div>
-            <div className="mt-6 grid gap-3 text-sm text-slate-600">
-              {[
-                "Priority support for live orders",
-                "Refunds processed in 3 to 5 days",
-                "Real-time courier tracking",
-              ].map((item) => (
-                <div key={item} className="flex items-start gap-2">
-                  <span className="mt-1 h-2.5 w-2.5 rounded-full bg-orange-500" />
-                  <span>{item}</span>
-                </div>
-              ))}
-            </div>
-          </div>
+      <div className="relative mx-auto max-w-5xl px-4 py-20 sm:px-6">
+        {/* Header */}
+        <div className="mb-14 text-center">
+          <p className="mb-3 inline-block rounded-full bg-orange-100 px-4 py-1 text-xs font-semibold uppercase tracking-widest text-orange-600 dark:bg-orange-500/10 dark:text-orange-400">
+            FAQs
+          </p>
+          <h2 className="text-4xl font-bold tracking-tight text-slate-900 sm:text-5xl dark:text-white">
+            Got questions? We’ve got answers.
+          </h2>
+          <p className="mx-auto mt-4 max-w-2xl text-base text-slate-600 sm:text-lg dark:text-slate-400">
+            Everything you need to know about ordering, payments, delivery, and your account.
+          </p>
         </div>
 
-        <div className="mt-12 grid gap-4">
+        {/* FAQ list */}
+        <div className="space-y-4">
           {faqs.map((faq, index) => {
             const isOpen = openIndex === index;
+
             return (
               <div
                 key={faq.question}
-                className={`rounded-3xl border bg-white/90 p-5 shadow-sm transition hover:-translate-y-1 hover:shadow-lg ${
-                  isOpen ? "border-slate-900/20" : "border-slate-100"
+                className={`rounded-2xl border border-white/70 bg-white/80 p-5 shadow-sm backdrop-blur transition-all duration-300 dark:border-white/10 dark:bg-slate-900/70 ${
+                  isOpen ? "shadow-lg" : "hover:shadow-md"
                 }`}
               >
                 <button
-                  type="button"
-                  onClick={() => setOpenIndex(isOpen ? -1 : index)}
-                  className="flex w-full items-center justify-between gap-4 text-left"
+                  onClick={() => setOpenIndex(isOpen ? null : index)}
                   aria-expanded={isOpen}
+                  className="flex w-full items-center justify-between gap-4 text-left"
                 >
-                  <span className="text-lg font-display font-semibold text-slate-900">
+                  <span className="text-lg font-semibold text-slate-900 dark:text-white">
                     {faq.question}
                   </span>
+
                   <span
-                    className={`flex h-11 w-11 items-center justify-center rounded-full border text-slate-500 transition ${
+                    className={`flex h-10 w-10 items-center justify-center rounded-full border transition-all duration-300 ${
                       isOpen
-                        ? "rotate-180 border-slate-900 bg-slate-900 text-white"
-                        : "border-slate-200 bg-white"
+                        ? "rotate-180 border-orange-500 bg-orange-500 text-white"
+                        : "border-slate-200 bg-white text-slate-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
                     }`}
                   >
                     <ChevronDown size={18} />
                   </span>
                 </button>
+
+                {/* Animated answer */}
                 <div
-                  className={`grid overflow-hidden text-sm text-slate-600 transition-all duration-300 ${
+                  className={`grid overflow-hidden transition-all duration-300 ease-in-out ${
                     isOpen ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
                   }`}
                 >
-                  <p className="mt-3 overflow-hidden leading-relaxed">{faq.answer}</p>
+                  <p className="mt-4 overflow-hidden text-sm leading-relaxed text-slate-600 dark:text-slate-400 sm:text-base">
+                    {faq.answer}
+                  </p>
                 </div>
               </div>
             );
           })}
         </div>
-      </section>
-    </div>
+
+        {/* Footer CTA */}
+        <div className="mt-16 rounded-3xl bg-slate-900 px-6 py-10 text-center text-white shadow-xl sm:px-10">
+          <h3 className="text-2xl font-semibold sm:text-3xl">
+            Still need help?
+          </h3>
+          <p className="mt-3 text-slate-300">
+            Our support team is available 24/7 to assist you.
+          </p>
+          <button className="mt-6 rounded-full bg-orange-500 px-8 py-3 text-sm font-semibold transition hover:bg-orange-600">
+            Contact Support
+          </button>
+        </div>
+      </div>
+    </section>
   );
 };
 

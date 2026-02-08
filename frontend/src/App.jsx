@@ -8,6 +8,7 @@ import Orders from "./pages/user/Orders";
 import Payment from "./pages/user/Payment";
 import AdminDashboard from "./pages/admin/Dashboard";
 import RestaurantDashboard from "./pages/restaurant/Dashboard";
+import SubscriptionPlans from "./pages/restaurant/SubscriptionPlans";
 import About from "./pages/info/About";
 import HelpCenter from "./pages/info/HelpCenter";
 import TermsOfService from "./pages/info/TermsOfService";
@@ -71,6 +72,8 @@ function App() {
               </ProtectedRoute>
             }
           />
+
+          <Route path="/subscriptions" element={<SubscriptionPlans />} />
 
           <Route
             path="/admin"

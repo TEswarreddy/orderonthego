@@ -1,7 +1,8 @@
 import { useState, useEffect, useContext } from "react";
 import axios from "../../api/axios";
 import { AuthContext } from "../../context/AuthContext";
-import { Plus, Edit2, Trash2, TrendingUp, Clock, CheckCircle, Star } from "lucide-react";
+import { Plus, Edit2, Trash2, TrendingUp, Clock, CheckCircle, Star, Crown, ArrowUpRight, AlertCircle } from "lucide-react";
+import { Link } from "react-router-dom";
 
 const RestaurantDashboard = () => {
   const { user } = useContext(AuthContext);
@@ -16,6 +17,9 @@ const RestaurantDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("items");
   const [showAddForm, setShowAddForm] = useState(false);
+  const [subscriptionUsage, setSubscriptionUsage] = useState(null);
+  const [availablePlans, setAvailablePlans] = useState([]);
+  const [cancelling, setCancelling] = useState(false);
   const [newFood, setNewFood] = useState({
     title: "",
     price: "",
@@ -49,6 +53,18 @@ const RestaurantDashboard = () => {
       });
 
       setOrders(restaurantOrders);
+
+      // Fetch subscription usage and plans
+      try {
+        const [usageRes, plansRes] = await Promise.all([
+          axios.get("/subscriptions/usage"),
+          axios.get("/subscriptions/plans"),
+        ]);
+        setSubscriptionUsage(usageRes.data);
+        setAvailablePlans(plansRes.data || []);
+      } catch (err) {
+        console.error("Failed to fetch subscription data:", err);
+      }
     } catch (err) {
       console.error("Failed to fetch restaurant data:", err);
     } finally {
@@ -62,6 +78,20 @@ const RestaurantDashboard = () => {
       return;
     }
 
+    // Check subscription limit before adding
+    try {
+      const limitCheck = await axios.get("/subscriptions/check-limit/maxMenuItems");
+      if (!limitCheck.data.canProceed) {
+        alert(
+          `❌ You've reached your plan limit of ${limitCheck.data.limit} menu items. Please upgrade your subscription to add more items.`
+        );
+        return;
+      }
+    } catch (err) {
+      console.error("Failed to check limit:", err);
+      // Continue anyway if check fails
+    }
+
     try {
       const res = await axios.post("/foods", {
         ...newFood,
@@ -72,6 +102,7 @@ const RestaurantDashboard = () => {
       setNewFood({ title: "", price: "", description: "", category: "pizza" });
       setShowAddForm(false);
       alert("✅ Food item added successfully!");
+      fetchRestaurantData(); // Refresh to update subscription usage
     } catch (err) {
       alert("❌ " + (err.response?.data?.message || "Failed to add food item"));
     }
@@ -99,6 +130,28 @@ const RestaurantDashboard = () => {
     }
   };
 
+  const handleCancelSubscription = async () => {
+    if (!window.confirm("Are you sure you want to cancel your subscription? You can continue using it until the end date.")) {
+      return;
+    }
+
+    try {
+      setCancelling(true);
+      await axios.put("/subscriptions/cancel");
+      alert("✅ Subscription cancelled successfully. You can continue using your plan until the end date.");
+      fetchRestaurantData();
+    } catch (err) {
+      alert("❌ " + (err.response?.data?.message || "Failed to cancel subscription"));
+    } finally {
+      setCancelling(false);
+    }
+  };
+
+  const handleUpgradePlan = (planName) => {
+    // Navigate to subscription plans page with selected plan
+    window.location.href = `/subscriptions?plan=${planName}`;
+  };
+
   const StatCard = ({ icon: Icon, title, value, color }) => (
     <div className={`bg-gradient-to-br ${color} text-white rounded-lg shadow-lg p-6 hover:shadow-xl transition`}>
       <div className="flex items-center justify-between">
@@ -120,6 +173,92 @@ const RestaurantDashboard = () => {
       <div className="max-w-7xl mx-auto">
         <h1 className="text-4xl font-bold text-gray-900 mb-2">Restaurant Dashboard</h1>
         <p className="text-gray-600 mb-8">Manage your menu and orders</p>
+
+        {/* Subscription Card */}
+        {subscriptionUsage && (
+          <div className="bg-gradient-to-br from-orange-500 to-red-500 rounded-xl shadow-lg p-6 mb-8 text-white">
+            <div className="flex items-start justify-between">
+              <div className="flex-1">
+                <div className="flex items-center gap-3 mb-4">
+                  <Crown size={32} />
+                  <div>
+                    <h2 className="text-2xl font-bold">{subscriptionUsage.plan} Plan</h2>
+                    <p className="text-orange-100 text-sm">
+                      {subscriptionUsage.isActive ? (
+                        subscriptionUsage.endDate ? (
+                          <>Valid until {new Date(subscriptionUsage.endDate).toLocaleDateString()}</>
+                        ) : (
+                          "Active"
+                        )
+                      ) : (
+                        <span className="flex items-center gap-1">
+                          <AlertCircle size={16} /> Subscription Expired
+                        </span>
+                      )}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Usage Stats */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                  <div className="bg-white bg-opacity-20 rounded-lg p-4">
+                    <p className="text-sm text-orange-100 mb-1">Menu Items</p>
+                    <div className="flex items-baseline gap-2">
+                      <p className="text-3xl font-bold">
+                        {subscriptionUsage.usage.menuItems.current}
+                      </p>
+                      <p className="text-sm opacity-90">/ {subscriptionUsage.usage.menuItems.limit}</p>
+                    </div>
+                    <div className="mt-2 bg-white bg-opacity-30 rounded-full h-2">
+                      <div
+                        className="bg-white rounded-full h-2 transition-all"
+                        style={{ width: `${Math.min(subscriptionUsage.usage.menuItems.percentage, 100)}%` }}
+                      ></div>
+                    </div>
+                  </div>
+
+                  <div className="bg-white bg-opacity-20 rounded-lg p-4">
+                    <p className="text-sm text-orange-100 mb-1">Orders Today</p>
+                    <div className="flex items-baseline gap-2">
+                      <p className="text-3xl font-bold">
+                        {subscriptionUsage.usage.ordersToday.current}
+                      </p>
+                      <p className="text-sm opacity-90">/ {subscriptionUsage.usage.ordersToday.limit}</p>
+                    </div>
+                    <div className="mt-2 bg-white bg-opacity-30 rounded-full h-2">
+                      <div
+                        className="bg-white rounded-full h-2 transition-all"
+                        style={{ width: `${Math.min(subscriptionUsage.usage.ordersToday.percentage, 100)}%` }}
+                      ></div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Limits Warning */}
+                {(subscriptionUsage.usage.menuItems.percentage >= 80 ||
+                  subscriptionUsage.usage.ordersToday.percentage >= 80) && (
+                  <div className="bg-yellow-500 bg-opacity-20 border border-yellow-300 rounded-lg p-3 mb-4">
+                    <p className="text-sm flex items-center gap-2">
+                      <AlertCircle size={16} />
+                      <span>
+                        You're approaching your plan limits. Consider upgrading for more capacity!
+                      </span>
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              {/* Upgrade Button */}
+              <Link
+                to="/subscriptions"
+                className="ml-4 bg-white text-orange-600 px-6 py-3 rounded-lg font-semibold hover:shadow-lg transition flex items-center gap-2"
+              >
+                {subscriptionUsage.plan === "FREE" ? "Upgrade Plan" : "Manage Plan"}
+                <ArrowUpRight size={18} />
+              </Link>
+            </div>
+          </div>
+        )}
 
         {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
@@ -151,7 +290,7 @@ const RestaurantDashboard = () => {
 
         {/* Tabs */}
         <div className="flex gap-4 mb-6 border-b">
-          {["items", "orders"].map((tab) => (
+          {["items", "orders", "subscription"].map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
@@ -161,7 +300,8 @@ const RestaurantDashboard = () => {
                   : "border-transparent text-gray-600 hover:text-gray-900"
               }`}
             >
-              {tab === "items" ? "Menu Items" : "Orders"} ({tab === "items" ? stats.totalItems : stats.activeOrders})
+              {tab === "items" ? "Menu Items" : tab === "orders" ? "Orders" : "Subscription"}
+              {tab !== "subscription" && ` (${tab === "items" ? stats.totalItems : stats.activeOrders})`}
             </button>
           ))}
         </div>
@@ -346,7 +486,270 @@ const RestaurantDashboard = () => {
             )}
           </div>
         )}
-      </div>
+        {/* Subscription Tab */}
+        {activeTab === "subscription" && (
+          <div className="space-y-6">
+            {/* Current Plan Card */}
+            {subscriptionUsage && (
+              <div className="bg-white rounded-xl shadow-lg overflow-hidden">
+                <div className="bg-gradient-to-br from-orange-500 to-red-500 text-white p-8">
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <div className="flex items-center gap-3 mb-4">
+                        <Crown size={40} />
+                        <div>
+                          <h2 className="text-3xl font-bold">{subscriptionUsage.plan} Plan</h2>
+                          <p className="text-orange-100 text-sm mt-1">
+                            {subscriptionUsage.isActive ? (
+                              subscriptionUsage.endDate ? (
+                                <>Valid until {new Date(subscriptionUsage.endDate).toLocaleDateString()}</>
+                              ) : (
+                                "Active • Forever Free"
+                              )
+                            ) : (
+                              <span className="flex items-center gap-1">
+                                <AlertCircle size={16} /> Subscription Expired - Please Renew
+                              </span>
+                            )}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="inline-flex items-center gap-2 bg-white bg-opacity-20 px-4 py-2 rounded-lg text-sm font-semibold">
+                        {subscriptionUsage.status === "ACTIVE" ? (
+                          <>
+                            <CheckCircle size={16} /> Active
+                          </>
+                        ) : (
+                          <>
+                            <AlertCircle size={16} /> {subscriptionUsage.status}
+                          </>
+                        )}
+                      </div>
+                    </div>
+                    {subscriptionUsage.plan !== "FREE" && subscriptionUsage.status === "ACTIVE" && (
+                      <button
+                        onClick={handleCancelSubscription}
+                        disabled={cancelling}
+                        className="bg-white bg-opacity-20 hover:bg-opacity-30 text-white px-6 py-2 rounded-lg font-semibold transition"
+                      >
+                        {cancelling ? "Cancelling..." : "Cancel Subscription"}
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                <div className="p-8">
+                  {/* Usage Statistics */}
+                  <h3 className="text-xl font-bold text-gray-900 mb-6">Usage Statistics</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                    <div className="border border-gray-200 rounded-lg p-6">
+                      <div className="flex items-center justify-between mb-4">
+                        <div>
+                          <p className="text-sm text-gray-600 mb-1">Menu Items</p>
+                          <p className="text-3xl font-bold text-gray-900">
+                            {subscriptionUsage.usage.menuItems.current}
+                            <span className="text-lg text-gray-500">/{subscriptionUsage.usage.menuItems.limit}</span>
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-2xl font-bold text-orange-600">
+                            {subscriptionUsage.usage.menuItems.percentage}%
+                          </p>
+                          <p className="text-xs text-gray-500">Used</p>
+                        </div>
+                      </div>
+                      <div className="bg-gray-200 rounded-full h-3 overflow-hidden">
+                        <div
+                          className={`h-3 rounded-full transition-all ${
+                            subscriptionUsage.usage.menuItems.percentage >= 90
+                              ? "bg-red-500"
+                              : subscriptionUsage.usage.menuItems.percentage >= 80
+                              ? "bg-yellow-500"
+                              : "bg-green-500"
+                          }`}
+                          style={{ width: `${Math.min(subscriptionUsage.usage.menuItems.percentage, 100)}%` }}
+                        ></div>
+                      </div>
+                      {subscriptionUsage.usage.menuItems.percentage >= 80 && (
+                        <p className="text-sm text-orange-600 mt-2 flex items-center gap-1">
+                          <AlertCircle size={14} />
+                          Approaching limit - Consider upgrading
+                        </p>
+                      )}
+                    </div>
+
+                    <div className="border border-gray-200 rounded-lg p-6">
+                      <div className="flex items-center justify-between mb-4">
+                        <div>
+                          <p className="text-sm text-gray-600 mb-1">Orders Today</p>
+                          <p className="text-3xl font-bold text-gray-900">
+                            {subscriptionUsage.usage.ordersToday.current}
+                            <span className="text-lg text-gray-500">/{subscriptionUsage.usage.ordersToday.limit}</span>
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-2xl font-bold text-orange-600">
+                            {subscriptionUsage.usage.ordersToday.percentage}%
+                          </p>
+                          <p className="text-xs text-gray-500">Used</p>
+                        </div>
+                      </div>
+                      <div className="bg-gray-200 rounded-full h-3 overflow-hidden">
+                        <div
+                          className={`h-3 rounded-full transition-all ${
+                            subscriptionUsage.usage.ordersToday.percentage >= 90
+                              ? "bg-red-500"
+                              : subscriptionUsage.usage.ordersToday.percentage >= 80
+                              ? "bg-yellow-500"
+                              : "bg-green-500"
+                          }`}
+                          style={{ width: `${Math.min(subscriptionUsage.usage.ordersToday.percentage, 100)}%` }}
+                        ></div>
+                      </div>
+                      {subscriptionUsage.usage.ordersToday.percentage >= 80 && (
+                        <p className="text-sm text-orange-600 mt-2 flex items-center gap-1">
+                          <AlertCircle size={14} />
+                          High volume today - Upgrade for more capacity
+                        </p>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Current Plan Features */}
+                  <h3 className="text-xl font-bold text-gray-900 mb-4">Plan Features</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
+                    <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-lg">
+                      <div className="p-2 bg-blue-100 rounded-lg">
+                        <Plus size={20} className="text-blue-600" />
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-600">Max Menu Items</p>
+                        <p className="font-bold text-gray-900">{subscriptionUsage.features.maxMenuItems}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-lg">
+                      <div className="p-2 bg-green-100 rounded-lg">
+                        <Clock size={20} className="text-green-600" />
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-600">Daily Orders</p>
+                        <p className="font-bold text-gray-900">{subscriptionUsage.features.maxOrdersPerDay}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-lg">
+                      <div className="p-2 bg-purple-100 rounded-lg">
+                        <TrendingUp size={20} className="text-purple-600" />
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-600">Analytics</p>
+                        <p className="font-bold text-gray-900">
+                          {subscriptionUsage.features.analyticsAccess ? "Enabled" : "Not Available"}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-lg">
+                      <div className="p-2 bg-yellow-100 rounded-lg">
+                        <Star size={20} className="text-yellow-600" />
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-600">Priority Support</p>
+                        <p className="font-bold text-gray-900">
+                          {subscriptionUsage.features.prioritySupport ? "24/7 Available" : "Standard"}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-lg">
+                      <div className="p-2 bg-orange-100 rounded-lg">
+                        <Crown size={20} className="text-orange-600" />
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-600">Custom Branding</p>
+                        <p className="font-bold text-gray-900">
+                          {subscriptionUsage.features.customBranding ? "Enabled" : "Not Available"}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Available Plans */}
+            {subscriptionUsage && subscriptionUsage.plan !== "PREMIUM" && (
+              <div className="bg-white rounded-xl shadow-lg p-8">
+                <h3 className="text-2xl font-bold text-gray-900 mb-2">Upgrade Your Plan</h3>
+                <p className="text-gray-600 mb-6">
+                  Get more features and capacity by upgrading to a higher tier
+                </p>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {availablePlans
+                    .filter((plan) => {
+                      // Show plans higher than current plan
+                      const planOrder = { FREE: 0, BASIC: 1, PREMIUM: 2 };
+                      return planOrder[plan.name] > planOrder[subscriptionUsage.plan];
+                    })
+                    .map((plan) => (
+                      <div
+                        key={plan.name}
+                        className="border-2 border-gray-200 rounded-xl p-6 hover:border-orange-500 hover:shadow-lg transition"
+                      >
+                        <div className="flex items-center gap-2 mb-4">
+                          <Crown size={24} className="text-orange-600" />
+                          <h4 className="text-xl font-bold text-gray-900">{plan.name}</h4>
+                        </div>
+                        <div className="mb-4">
+                          <div className="flex items-baseline gap-1">
+                            <span className="text-4xl font-bold text-gray-900">₹{plan.price}</span>
+                            {plan.name !== "FREE" && <span className="text-gray-600">/month</span>}
+                          </div>
+                        </div>
+                        <ul className="space-y-2 mb-6">
+                          {plan.features.slice(0, 4).map((feature, idx) => (
+                            <li key={idx} className="flex items-start gap-2 text-sm text-gray-700">
+                              <CheckCircle size={16} className="text-green-500 flex-shrink-0 mt-0.5" />
+                              <span>{feature}</span>
+                            </li>
+                          ))}
+                        </ul>
+                        <button
+                          onClick={() => handleUpgradePlan(plan.name)}
+                          className="w-full bg-gradient-to-r from-orange-500 to-red-500 text-white py-3 rounded-lg font-semibold hover:shadow-lg transition"
+                        >
+                          Upgrade to {plan.name}
+                        </button>
+                      </div>
+                    ))}
+                </div>
+
+                <div className="mt-6 text-center">
+                  <Link
+                    to="/subscriptions"
+                    className="inline-flex items-center gap-2 text-orange-600 hover:text-orange-700 font-semibold"
+                  >
+                    View all plans and features
+                    <ArrowUpRight size={18} />
+                  </Link>
+                </div>
+              </div>
+            )}
+
+            {/* Help Section */}
+            <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-8 text-center">
+              <h3 className="text-2xl font-bold text-gray-900 mb-2">Need Help?</h3>
+              <p className="text-gray-600 mb-4">
+                Have questions about subscriptions or need assistance choosing the right plan?
+              </p>
+              <Link
+                to="/help"
+                className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-semibold transition"
+              >
+                Contact Support
+                <ArrowUpRight size={18} />
+              </Link>
+            </div>
+          </div>
+        )}      </div>
     </div>
   );
 };

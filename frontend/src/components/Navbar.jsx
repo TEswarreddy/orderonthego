@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { useContext, useState } from "react";
 import { AuthContext } from "../context/AuthContext";
 import { Menu, X, ShoppingCart, LogOut } from "lucide-react";
+import SubscriptionBadge from "./SubscriptionBadge";
 
 const Navbar = () => {
   const { user, logout } = useContext(AuthContext);
@@ -55,12 +56,15 @@ const Navbar = () => {
           )}
 
           {user?.userType === "RESTAURANT" && (
-            <Link 
-              to="/restaurant"
-              className="hover:text-yellow-200 transition-colors duration-200 font-medium px-3 py-2 rounded-lg hover:bg-white hover:bg-opacity-10"
-            >
-              🏪 Dashboard
-            </Link>
+            <>
+              <Link 
+                to="/restaurant"
+                className="hover:text-yellow-200 transition-colors duration-200 font-medium px-3 py-2 rounded-lg hover:bg-white hover:bg-opacity-10"
+              >
+                🏪 Dashboard
+              </Link>
+              <SubscriptionBadge />
+            </>
           )}
 
           {user?.userType === "ADMIN" && (
@@ -136,13 +140,18 @@ const Navbar = () => {
           )}
 
           {user?.userType === "RESTAURANT" && (
-            <Link 
-              to="/restaurant"
-              className="block hover:text-yellow-200 transition-colors duration-200 font-medium px-3 py-2 rounded-lg hover:bg-white hover:bg-opacity-10"
-              onClick={() => setIsOpen(false)}
-            >
-              🏪 Dashboard
-            </Link>
+            <>
+              <Link 
+                to="/restaurant"
+                className="block hover:text-yellow-200 transition-colors duration-200 font-medium px-3 py-2 rounded-lg hover:bg-white hover:bg-opacity-10"
+                onClick={() => setIsOpen(false)}
+              >
+                🏪 Dashboard
+              </Link>
+              <div className="px-3 py-2">
+                <SubscriptionBadge />
+              </div>
+            </>
           )}
 
           {user?.userType === "ADMIN" && (

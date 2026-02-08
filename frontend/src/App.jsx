@@ -5,6 +5,7 @@ import Home from "./pages/user/Home";
 import FoodDetail from "./pages/user/FoodDetail";
 import Cart from "./pages/user/Cart";
 import Orders from "./pages/user/Orders";
+import Payment from "./pages/user/Payment";
 import AdminDashboard from "./pages/admin/Dashboard";
 import RestaurantDashboard from "./pages/restaurant/Dashboard";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -36,6 +37,15 @@ function App() {
             element={
               <ProtectedRoute role="USER">
                 <Orders />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/payment"
+            element={
+              <ProtectedRoute role="USER">
+                <Payment />
               </ProtectedRoute>
             }
           />

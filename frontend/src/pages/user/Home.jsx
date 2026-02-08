@@ -268,13 +268,17 @@ const Home = () => {
                   {filteredFoods.map((food) => (
                     <div
                       key={food._id}
-                      className="bg-white rounded-lg shadow-md hover:shadow-xl transition-shadow overflow-hidden"
+                      className="bg-white rounded-lg shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden group cursor-pointer"
+                      onClick={() => navigate(`/food/${food._id}`)}
                     >
                       {/* Image Placeholder */}
-                      <div className="h-48 bg-gradient-to-r from-orange-400 to-red-400 relative flex items-center justify-center">
-                        <span className="text-white text-4xl">🍜</span>
+                      <div className="h-48 bg-gradient-to-r from-orange-400 to-red-400 relative flex items-center justify-center overflow-hidden">
+                        <span className="text-white text-4xl group-hover:scale-125 transition-transform duration-300">🍜</span>
                         <button
-                          onClick={() => toggleFavorite(food._id)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            toggleFavorite(food._id);
+                          }}
                           className="absolute top-2 right-2 bg-white rounded-full p-2 shadow hover:shadow-lg transition"
                         >
                           <Heart
@@ -291,7 +295,7 @@ const Home = () => {
                       <div className="p-4">
                         <div className="flex justify-between items-start mb-2">
                           <div>
-                            <h3 className="text-lg font-bold text-gray-800">
+                            <h3 className="text-lg font-bold text-gray-800 group-hover:text-orange-600 transition">
                               {food.title}
                             </h3>
                             <p className="text-xs text-orange-600 capitalize">
@@ -335,7 +339,10 @@ const Home = () => {
                         {/* Quantity Selector */}
                         <div className="flex items-center gap-2 mb-3">
                           <button
-                            onClick={() => updateQuantity(food._id, -1)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              updateQuantity(food._id, -1);
+                            }}
                             className="px-3 py-1 bg-gray-200 text-gray-800 rounded hover:bg-gray-300 transition font-semibold"
                           >
                             −
@@ -344,7 +351,10 @@ const Home = () => {
                             {quantities[food._id] || 1}
                           </span>
                           <button
-                            onClick={() => updateQuantity(food._id, 1)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              updateQuantity(food._id, 1);
+                            }}
                             className="px-3 py-1 bg-gray-200 text-gray-800 rounded hover:bg-gray-300 transition font-semibold"
                           >
                             +
@@ -353,7 +363,10 @@ const Home = () => {
 
                         {/* Add to Cart Button */}
                         <button
-                          onClick={() => addToCart(food._id)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            addToCart(food._id);
+                          }}
                           className="w-full bg-gradient-to-r from-orange-500 to-red-500 text-white py-2 rounded-lg hover:from-orange-600 hover:to-red-600 transition-all font-semibold shadow-md hover:shadow-lg"
                         >
                           🛒 Add to Cart

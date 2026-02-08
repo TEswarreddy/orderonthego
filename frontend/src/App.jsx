@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Login from "./pages/auth/Login";
 import Register from "./pages/auth/Register";
 import Home from "./pages/user/Home";
+import FoodDetail from "./pages/user/FoodDetail";
 import Cart from "./pages/user/Cart";
 import Orders from "./pages/user/Orders";
 import AdminDashboard from "./pages/admin/Dashboard";
@@ -17,6 +18,7 @@ function App() {
         <Navbar />
         <Routes>
           <Route path="/" element={<Home />} />
+          <Route path="/food/:foodId" element={<FoodDetail />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
 

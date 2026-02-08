@@ -46,6 +46,20 @@ exports.getAllFoods = async (req, res) => {
   res.json(foods);
 };
 
+// Get single food by ID
+exports.getFoodById = async (req, res) => {
+  try {
+    const food = await Food.findById(req.params.id).populate("restaurantId", "title");
+    if (!food) {
+      return res.status(404).json({ message: "Food not found" });
+    }
+    res.json(food);
+  } catch (error) {
+    console.error("Get food by ID error:", error);
+    res.status(500).json({ message: "Failed to fetch food details" });
+  }
+};
+
 // Get food by restaurant
 exports.getFoodsByRestaurant = async (req, res) => {
   const foods = await Food.find({ restaurantId: req.params.id });

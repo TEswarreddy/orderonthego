@@ -8,8 +8,9 @@ const {
 } = require("../controllers/foodController");
 
 const { protect, authorize } = require("../middlewares/authMiddleware");
+const { checkMenuItemLimit } = require("../middlewares/subscriptionMiddleware");
 
-router.post("/", protect, authorize("RESTAURANT"), addFood);
+router.post("/", protect, authorize("RESTAURANT"), checkMenuItemLimit, addFood);
 router.get("/", getAllFoods);
 router.get("/restaurant/:id", getFoodsByRestaurant);
 router.get("/:id", getFoodById);

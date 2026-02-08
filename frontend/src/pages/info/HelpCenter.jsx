@@ -66,7 +66,7 @@ const HelpCenter = () => {
               Browse FAQs
             </Link>
             <a
-              href="mailto:support@orderonthego.com"
+              href="mailto:thathieswarreddy@gmail.com"
               className="rounded-full border border-slate-900/10 px-6 py-2 text-sm font-semibold text-slate-900 transition hover:border-slate-900/30"
             >
               Email support

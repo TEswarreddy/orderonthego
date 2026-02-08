@@ -2,7 +2,7 @@ import { useEffect, useState, useContext, useMemo } from "react";
 import axios from "../../api/axios";
 import { AuthContext } from "../../context/AuthContext";
 import { useNavigate, Link } from "react-router-dom";
-import { Heart, Star, MapPin, Clock, TrendingUp } from "lucide-react";
+import { Heart, Star, MapPin, Clock, TrendingUp, ShoppingCart } from "lucide-react";
 
 const Home = () => {
   const [foods, setFoods] = useState([]);

@@ -10,6 +10,11 @@ const userSchema = new mongoose.Schema(
       enum: ["USER", "RESTAURANT", "ADMIN"],
       default: "USER",
     },
+    status: {
+      type: String,
+      enum: ["active", "inactive", "banned"],
+      default: "active",
+    },
     approval: {
       type: Boolean,
       default: false, // restaurants need admin approval

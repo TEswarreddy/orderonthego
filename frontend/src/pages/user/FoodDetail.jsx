@@ -15,7 +15,12 @@ const FoodDetail = () => {
   const [isFavorite, setIsFavorite] = useState(false);
   const [activeTab, setActiveTab] = useState("overview");
   const [reviews, setReviews] = useState([]);
+  const [reviewStats, setReviewStats] = useState({ averageRating: 0, totalReviews: 0 });
   const [cartLoading, setCartLoading] = useState(false);
+  const [reviewForm, setReviewForm] = useState({ rating: 5, comment: "" });
+  const [submittingReview, setSubmittingReview] = useState(false);
+  const [userReview, setUserReview] = useState(null);
+  const [editingReview, setEditingReview] = useState(false);
 
   useEffect(() => {
     const fetchFoodDetail = async () => {
@@ -23,12 +28,6 @@ const FoodDetail = () => {
         setLoading(true);
         const res = await axios.get(`/foods/${foodId}`);
         setFood(res.data);
-        // Mock reviews data
-        setReviews([
-          { id: 1, name: "John Doe", rating: 5, comment: "Absolutely delicious! Will order again.", date: "2 days ago" },
-          { id: 2, name: "Sarah Smith", rating: 4, comment: "Great taste and quick delivery.", date: "1 week ago" },
-          { id: 3, name: "Mike Johnson", rating: 5, comment: "Best food in the city!", date: "10 days ago" },
-        ]);
       } catch (err) {
         console.error("Failed to fetch food detail:", err);
         alert("Failed to load food details");
@@ -38,6 +37,114 @@ const FoodDetail = () => {
     };
     fetchFoodDetail();
   }, [foodId]);
+
+  useEffect(() => {
+    const fetchReviews = async () => {
+      try {
+        const res = await axios.get(`/reviews/food/${foodId}`);
+        setReviews(res.data);
+        
+        // Find current user's review
+        if (user) {
+          const myReview = res.data.find(
+            (review) => review.userId._id === user._id
+          );
+          setUserReview(myReview);
+          if (myReview) {
+            setReviewForm({ rating: myReview.rating, comment: myReview.comment });
+          }
+        }
+      } catch (err) {
+        console.error("Failed to fetch reviews:", err);
+      }
+    };
+
+    const fetchReviewStats = async () => {
+      try {
+        const res = await axios.get(`/reviews/food/${foodId}/stats`);
+        setReviewStats(res.data);
+      } catch (err) {
+        console.error("Failed to fetch review stats:", err);
+      }
+    };
+
+    if (foodId) {
+      fetchReviews();
+      fetchReviewStats();
+    }
+  }, [foodId, user]);
+
+  const handleSubmitReview = async (e) => {
+    e.preventDefault();
+
+    if (!user) {
+      alert("Please login to submit a review");
+      navigate("/login");
+      return;
+    }
+
+    if (!reviewForm.comment.trim()) {
+      alert("Please write a comment");
+      return;
+    }
+
+    try {
+      setSubmittingReview(true);
+
+      if (userReview && editingReview) {
+        // Update existing review
+        const res = await axios.put(`/reviews/${userReview._id}`, reviewForm);
+        setReviews(
+          reviews.map((r) => (r._id === userReview._id ? res.data : r))
+        );
+        setUserReview(res.data);
+        setEditingReview(false);
+        alert("Review updated successfully! ✅");
+      } else {
+        // Add new review
+        const res = await axios.post("/reviews", {
+          foodId,
+          ...reviewForm,
+        });
+        setReviews([res.data, ...reviews]);
+        setUserReview(res.data);
+        alert("Review submitted successfully! ✅");
+      }
+
+      setReviewForm({ rating: 5, comment: "" });
+    } catch (err) {
+      alert(err.response?.data?.message || "Failed to submit review");
+    } finally {
+      setSubmittingReview(false);
+    }
+  };
+
+  const handleDeleteReview = async () => {
+    if (!window.confirm("Are you sure you want to delete your review?")) {
+      return;
+    }
+
+    try {
+      await axios.delete(`/reviews/${userReview._id}`);
+      setReviews(reviews.filter((r) => r._id !== userReview._id));
+      setUserReview(null);
+      setReviewForm({ rating: 5, comment: "" });
+      setEditingReview(false);
+      alert("Review deleted successfully");
+    } catch (err) {
+      alert(err.response?.data?.message || "Failed to delete review");
+    }
+  };
+
+  const startEditReview = () => {
+    setEditingReview(true);
+    setReviewForm({ rating: userReview.rating, comment: userReview.comment });
+  };
+
+  const cancelEditReview = () => {
+    setEditingReview(false);
+    setReviewForm({ rating: userReview.rating, comment: userReview.comment });
+  };
 
   const addToCart = async () => {
     if (!user) {
@@ -152,7 +259,7 @@ const FoodDetail = () => {
 
               {/* Rating and Info */}
               <div className="flex flex-wrap gap-6 mb-6 pb-6 border-b">
-                {food.rating ? (
+                {reviewStats.totalReviews > 0 ? (
                   <div className="flex items-center gap-2">
                     <div className="flex items-center">
                       {[...Array(5)].map((_, i) => (
@@ -160,7 +267,7 @@ const FoodDetail = () => {
                           key={i}
                           size={20}
                           className={`${
-                            i < Math.round(food.rating)
+                            i < Math.round(reviewStats.averageRating)
                               ? "fill-yellow-400 text-yellow-400"
                               : "text-gray-300"
                           }`}
@@ -168,9 +275,9 @@ const FoodDetail = () => {
                       ))}
                     </div>
                     <span className="text-lg font-semibold text-gray-700">
-                      {food.rating.toFixed(1)}
+                      {reviewStats.averageRating.toFixed(1)}
                     </span>
-                    <span className="text-gray-500">(128 reviews)</span>
+                    <span className="text-gray-500">({reviewStats.totalReviews} reviews)</span>
                   </div>
                 ) : (
                   <p className="text-gray-500">No ratings yet</p>
@@ -269,31 +376,173 @@ const FoodDetail = () => {
                 )}
 
                 {activeTab === "reviews" && (
-                  <div className="space-y-4">
-                    {reviews.map((review) => (
-                      <div key={review.id} className="p-4 bg-gray-100 rounded-lg">
-                        <div className="flex justify-between items-start mb-2">
-                          <div>
-                            <p className="font-semibold text-gray-800">{review.name}</p>
-                            <p className="text-sm text-gray-500">{review.date}</p>
+                  <div className="space-y-6">
+                    {/* Review Form */}
+                    {user && (
+                      <div className="bg-gradient-to-r from-orange-50 to-red-50 p-6 rounded-lg border-2 border-orange-200">
+                        <h4 className="font-bold text-gray-800 mb-4 text-lg">
+                          {userReview && !editingReview
+                            ? "Your Review"
+                            : editingReview
+                            ? "Edit Your Review"
+                            : "Write a Review"}
+                        </h4>
+
+                        {userReview && !editingReview ? (
+                          <div className="space-y-3">
+                            <div className="flex gap-1 mb-2">
+                              {[...Array(5)].map((_, i) => (
+                                <Star
+                                  key={i}
+                                  size={20}
+                                  className={`${
+                                    i < userReview.rating
+                                      ? "fill-yellow-400 text-yellow-400"
+                                      : "text-gray-300"
+                                  }`}
+                                />
+                              ))}
+                            </div>
+                            <p className="text-gray-700">{userReview.comment}</p>
+                            <div className="flex gap-3 mt-4">
+                              <button
+                                onClick={startEditReview}
+                                className="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition font-semibold"
+                              >
+                                ✏️ Edit
+                              </button>
+                              <button
+                                onClick={handleDeleteReview}
+                                className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition font-semibold"
+                              >
+                                🗑️ Delete
+                              </button>
+                            </div>
                           </div>
-                          <div className="flex gap-1">
-                            {[...Array(5)].map((_, i) => (
-                              <Star
-                                key={i}
-                                size={16}
-                                className={`${
-                                  i < review.rating
-                                    ? "fill-yellow-400 text-yellow-400"
-                                    : "text-gray-300"
-                                }`}
+                        ) : (
+                          <form onSubmit={handleSubmitReview} className="space-y-4">
+                            {/* Star Rating */}
+                            <div>
+                              <label className="block text-gray-700 font-semibold mb-2">
+                                Rating
+                              </label>
+                              <div className="flex gap-2">
+                                {[1, 2, 3, 4, 5].map((rating) => (
+                                  <button
+                                    key={rating}
+                                    type="button"
+                                    onClick={() =>
+                                      setReviewForm({ ...reviewForm, rating })
+                                    }
+                                    className="transition-transform hover:scale-125"
+                                  >
+                                    <Star
+                                      size={32}
+                                      className={`${
+                                        rating <= reviewForm.rating
+                                          ? "fill-yellow-400 text-yellow-400"
+                                          : "text-gray-300"
+                                      }`}
+                                    />
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+
+                            {/* Comment */}
+                            <div>
+                              <label className="block text-gray-700 font-semibold mb-2">
+                                Your Review
+                              </label>
+                              <textarea
+                                value={reviewForm.comment}
+                                onChange={(e) =>
+                                  setReviewForm({
+                                    ...reviewForm,
+                                    comment: e.target.value,
+                                  })
+                                }
+                                placeholder="Share your experience with this food..."
+                                rows="4"
+                                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                                required
                               />
-                            ))}
-                          </div>
-                        </div>
-                        <p className="text-gray-700">{review.comment}</p>
+                            </div>
+
+                            {/* Buttons */}
+                            <div className="flex gap-3">
+                              <button
+                                type="submit"
+                                disabled={submittingReview}
+                                className="px-6 py-2 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-lg hover:from-orange-600 hover:to-red-600 transition font-semibold disabled:opacity-50"
+                              >
+                                {submittingReview
+                                  ? "Submitting..."
+                                  : editingReview
+                                  ? "Update Review"
+                                  : "Submit Review"}
+                              </button>
+                              {editingReview && (
+                                <button
+                                  type="button"
+                                  onClick={cancelEditReview}
+                                  className="px-6 py-2 bg-gray-300 text-gray-800 rounded-lg hover:bg-gray-400 transition font-semibold"
+                                >
+                                  Cancel
+                                </button>
+                              )}
+                            </div>
+                          </form>
+                        )}
                       </div>
-                    ))}
+                    )}
+
+                    {/* Reviews List */}
+                    {reviews.length === 0 ? (
+                      <div className="text-center py-8">
+                        <p className="text-gray-500 text-lg">
+                          No reviews yet. Be the first to review!
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="space-y-4">
+                        <h4 className="font-bold text-gray-800 text-lg">
+                          All Reviews ({reviews.length})
+                        </h4>
+                        {reviews.map((review) => (
+                          <div key={review._id} className="p-4 bg-gray-50 rounded-lg border">
+                            <div className="flex justify-between items-start mb-2">
+                              <div>
+                                <p className="font-semibold text-gray-800">
+                                  {review.userId.name}
+                                </p>
+                                <p className="text-sm text-gray-500">
+                                  {new Date(review.createdAt).toLocaleDateString("en-US", {
+                                    year: "numeric",
+                                    month: "long",
+                                    day: "numeric",
+                                  })}
+                                </p>
+                              </div>
+                              <div className="flex gap-1">
+                                {[...Array(5)].map((_, i) => (
+                                  <Star
+                                    key={i}
+                                    size={16}
+                                    className={`${
+                                      i < review.rating
+                                        ? "fill-yellow-400 text-yellow-400"
+                                        : "text-gray-300"
+                                    }`}
+                                  />
+                                ))}
+                              </div>
+                            </div>
+                            <p className="text-gray-700">{review.comment}</p>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 )}
               </div>

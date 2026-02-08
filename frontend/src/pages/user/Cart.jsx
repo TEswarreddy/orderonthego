@@ -37,7 +37,7 @@ const Cart = () => {
       const { data } = await axios.post("/payment/create-order");
 
       const options = {
-        key: "rzp_test_xxxxx", // Razorpay KEY_ID
+        key: "rzp_test_SDZuVJeLueHBta", // Razorpay KEY_ID
         amount: data.razorpayOrder.amount,
         currency: "INR",
         name: "SB Foods",

@@ -4,13 +4,10 @@ import { AuthContext } from "../context/AuthContext";
 
 const Navbar = () => {
   const { user, logout } = useContext(AuthContext);
- 
 
   return (
-    <nav className="flex justify-between items-center px-6 py-4 bg-black text-white">
-      <Link to="/" className="text-xl font-bold">
-        SB Foods
-      </Link>
+    <nav className="bg-black text-white px-6 py-4 flex justify-between">
+      <Link to="/" className="font-bold text-xl">SB Foods</Link>
 
       <div className="flex gap-4 items-center">
         {!user && (
@@ -34,8 +31,6 @@ const Navbar = () => {
         {user?.userType === "ADMIN" && (
           <Link to="/admin">Admin</Link>
         )}
-
-        
 
         {user && (
           <button

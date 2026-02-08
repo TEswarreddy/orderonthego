@@ -4,11 +4,40 @@ const Restaurant = require("../models/Restaurant");
 
 // Add food item (Restaurant only)
 exports.addFood = async (req, res) => {
-  const food = await Food.create({
-    ...req.body,
-    restaurantId: req.user._id,
-  });
-  res.status(201).json(food);
+  try {
+    const {
+      title,
+      price,
+      description,
+      category,
+      menuType,
+      mainImg,
+      discount,
+    } = req.body;
+
+    // ✅ BACKEND VALIDATION (CRITICAL)
+    if (!title || price === undefined) {
+      return res.status(400).json({
+        message: "Food title and price are required",
+      });
+    }
+
+    const food = await Food.create({
+      restaurantId: req.user._id,
+      title,
+      price: Number(price),
+      description,
+      category,
+      menuType,
+      mainImg,
+      discount,
+    });
+
+    res.status(201).json(food);
+  } catch (error) {
+    console.error("Add food error:", error);
+    res.status(500).json({ message: "Failed to add food" });
+  }
 };
 
 // Get all food items

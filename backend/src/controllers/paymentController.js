@@ -86,6 +86,8 @@ exports.verifyPayment = async (req, res) => {
     paymentId: payment._id,
     paymentStatus: "PAID",
   });
+  payment.orderId = order._id;
+  await payment.save();
 
   // Clear cart
   cart.items = [];

@@ -7,8 +7,20 @@ const userSchema = new mongoose.Schema(
     password: { type: String, required: true },
     userType: {
       type: String,
-      enum: ["USER", "RESTAURANT", "ADMIN"],
+      enum: ["USER", "RESTAURANT", "ADMIN", "STAFF"],
       default: "USER",
+    },
+    staffRole: {
+      type: String,
+      enum: ["MANAGER", "CHEF", "DELIVERY", "STAFF"],
+    },
+    restaurantId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+    },
+    invitedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
     },
     status: {
       type: String,
@@ -17,7 +29,7 @@ const userSchema = new mongoose.Schema(
     },
     approval: {
       type: Boolean,
-      default: false, // restaurants need admin approval
+      default: false, // restaurants and staff need approval
     },
   },
   { timestamps: true }

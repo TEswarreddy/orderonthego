@@ -6,6 +6,10 @@ const generateToken = require("../utils/generateToken");
 exports.register = async (req, res) => {
   const { username, email, password, userType } = req.body;
 
+  if (userType === "STAFF") {
+    return res.status(403).json({ message: "Staff accounts must be created via invitation" });
+  }
+
   const userExists = await User.findOne({ email });
   if (userExists) {
     return res.status(400).json({ message: "User already exists" });
@@ -50,11 +54,17 @@ exports.login = async (req, res) => {
     return res.status(403).json({ message: "Restaurant not approved by admin" });
   }
 
+  if (user.userType === "STAFF" && !user.approval) {
+    return res.status(403).json({ message: "Staff account pending owner approval" });
+  }
+
   res.json({
     _id: user._id,
     username: user.username,
     email: user.email,
     userType: user.userType,
+    staffRole: user.staffRole,
+    restaurantId: user.restaurantId,
     token: generateToken(user),
   });
 };

@@ -6,7 +6,10 @@ const ProtectedRoute = ({ children, role }) => {
   const { user } = useContext(AuthContext);
 
   if (!user) return <Navigate to="/login" />;
-  if (role && user.userType !== role) return <Navigate to="/" />;
+  if (role) {
+    const allowedRoles = Array.isArray(role) ? role : [role];
+    if (!allowedRoles.includes(user.userType)) return <Navigate to="/" />;
+  }
 
   return children;
 };

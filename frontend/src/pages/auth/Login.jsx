@@ -19,7 +19,7 @@ const Login = () => {
       login(res.data);
 
       if (res.data.userType === "ADMIN") navigate("/admin");
-      else if (res.data.userType === "RESTAURANT") navigate("/restaurant");
+      else if (res.data.userType === "RESTAURANT" || res.data.userType === "STAFF") navigate("/restaurant");
       else navigate("/");
     } catch (err) {
       alert(err.response.data.message);

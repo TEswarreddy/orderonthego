@@ -1,6 +1,9 @@
 const Food = require("../models/Food");
 const Restaurant = require("../models/Restaurant");
 
+const resolveRestaurantId = (user) =>
+  user.userType === "STAFF" ? user.restaurantId : user._id;
+
 
 // Add food item (Restaurant only)
 exports.addFood = async (req, res) => {
@@ -114,5 +117,30 @@ exports.deleteFood = async (req, res) => {
   } catch (error) {
     console.error("Delete food error:", error);
     res.status(500).json({ message: "Failed to delete food" });
+  }
+};
+
+// Update availability (Restaurant or Staff)
+exports.updateAvailability = async (req, res) => {
+  try {
+    const { isAvailable } = req.body;
+    const food = await Food.findById(req.params.id);
+
+    if (!food) {
+      return res.status(404).json({ message: "Food not found" });
+    }
+
+    const restaurantId = resolveRestaurantId(req.user);
+    if (!restaurantId || food.restaurantId.toString() !== restaurantId.toString()) {
+      return res.status(403).json({ message: "Not authorized to update this food" });
+    }
+
+    food.isAvailable = Boolean(isAvailable);
+    await food.save();
+
+    res.json(food);
+  } catch (error) {
+    console.error("Update availability error:", error);
+    res.status(500).json({ message: "Failed to update availability" });
   }
 };

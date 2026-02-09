@@ -22,6 +22,11 @@ const RestaurantDashboard = () => {
   const [cancelling, setCancelling] = useState(false);
   const [editingFood, setEditingFood] = useState(null);
   const [showEditForm, setShowEditForm] = useState(false);
+  const [staffMembers, setStaffMembers] = useState([]);
+  const [pendingStatusRequests, setPendingStatusRequests] = useState([]);
+  const [inviteEmail, setInviteEmail] = useState("");
+  const [inviteRole, setInviteRole] = useState("MANAGER");
+  const [latestInviteLink, setLatestInviteLink] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [filterCategory, setFilterCategory] = useState("all");
   const [orderSearch, setOrderSearch] = useState("");
@@ -37,10 +42,57 @@ const RestaurantDashboard = () => {
     if (user) fetchRestaurantData();
   }, [user]);
 
+  useEffect(() => {
+    if (user?.userType === "STAFF") {
+      setActiveTab("orders");
+    }
+  }, [user]);
+
+  const allStatusOptions = [
+    { value: "PLACED", label: "Placed" },
+    { value: "PENDING", label: "Pending" },
+    { value: "CONFIRMED", label: "Confirmed" },
+    { value: "PREPARING", label: "Preparing" },
+    { value: "READY", label: "Ready" },
+    { value: "OUT_FOR_DELIVERY", label: "Out for Delivery" },
+    { value: "DELIVERED", label: "Delivered" },
+  ];
+
+  const getAllowedStatusOptions = () => {
+    if (user?.userType !== "STAFF") return allStatusOptions;
+
+    switch (user?.staffRole) {
+      case "MANAGER":
+        return allStatusOptions;
+      case "CHEF":
+        return allStatusOptions.filter((option) => ["PREPARING", "READY"].includes(option.value));
+      case "DELIVERY":
+        return allStatusOptions.filter((option) => ["OUT_FOR_DELIVERY", "DELIVERED"].includes(option.value));
+      default:
+        return [];
+    }
+  };
+
+  const getDisplayStatusOptions = (currentStatus) => {
+    if (user?.userType !== "STAFF") return allStatusOptions;
+
+    const allowed = getAllowedStatusOptions();
+    const hasCurrent = allowed.some((option) => option.value === currentStatus);
+    if (hasCurrent) return allowed;
+
+    return [
+      { value: currentStatus, label: currentStatus.replace(/_/g, " ") },
+      ...allowed,
+    ];
+  };
+
   const fetchRestaurantData = async () => {
     try {
       setLoading(true);
-      const foodsRes = await axios.get("/foods");
+      const restaurantId = user?.userType === "STAFF" ? user.restaurantId : user?._id;
+      const foodsRes = restaurantId
+        ? await axios.get(`/foods/restaurant/${restaurantId}`)
+        : await axios.get("/foods");
       setFoods(foodsRes.data || []);
 
       const ordersRes = await axios.get("/orders/restaurant");
@@ -60,21 +112,29 @@ const RestaurantDashboard = () => {
 
       setOrders(restaurantOrders);
 
-      // Fetch subscription usage and plans
-      try {
-        const [usageRes, plansRes] = await Promise.all([
-          axios.get("/subscriptions/usage"),
-          axios.get("/subscriptions/plans"),
-        ]);
-        setSubscriptionUsage(usageRes.data);
-        setAvailablePlans(plansRes.data || []);
-      } catch (err) {
-        if (err.response?.status === 401) {
-          console.warn("⚠️ Subscription session expired. Please log in again.");
-        } else if (err.response?.status === 404) {
-          console.warn("⚠️ Subscription endpoints not found. Backend may still be starting.");
+      if (user?.userType === "RESTAURANT") {
+        // Fetch subscription usage and plans
+        try {
+          const [usageRes, plansRes] = await Promise.all([
+            axios.get("/subscriptions/usage"),
+            axios.get("/subscriptions/plans"),
+          ]);
+          setSubscriptionUsage(usageRes.data);
+          setAvailablePlans(plansRes.data || []);
+        } catch (err) {
+          if (err.response?.status === 401) {
+            console.warn("⚠️ Subscription session expired. Please log in again.");
+          } else if (err.response?.status === 404) {
+            console.warn("⚠️ Subscription endpoints not found. Backend may still be starting.");
+          }
+          console.error("Failed to fetch subscription data:", err);
         }
-        console.error("Failed to fetch subscription data:", err);
+      } else {
+        setSubscriptionUsage(null);
+      }
+
+      if (user?.userType === "RESTAURANT") {
+        await fetchStaffData();
       }
     } catch (err) {
       if (err.response?.status === 401) {
@@ -85,6 +145,19 @@ const RestaurantDashboard = () => {
       console.error("Failed to fetch restaurant data:", err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchStaffData = async () => {
+    try {
+      const [staffRes, requestsRes] = await Promise.all([
+        axios.get("/staff/members"),
+        axios.get("/staff/status-requests"),
+      ]);
+      setStaffMembers(staffRes.data || []);
+      setPendingStatusRequests(requestsRes.data || []);
+    } catch (err) {
+      console.error("Failed to fetch staff data:", err);
     }
   };
 
@@ -179,6 +252,37 @@ const RestaurantDashboard = () => {
     }
   };
 
+  const requestStatusChange = async (orderId, newStatus) => {
+    try {
+      await axios.post(`/orders/${orderId}/status-request`, { status: newStatus });
+      alert("✅ Status change request sent for approval.");
+    } catch (err) {
+      alert("❌ " + (err.response?.data?.message || "Failed to request status change"));
+    }
+  };
+
+  const handleOrderStatusChange = async (orderId, newStatus) => {
+    if (user?.userType === "STAFF") {
+      const allowedOptions = getAllowedStatusOptions().map((option) => option.value);
+      if (!allowedOptions.includes(newStatus)) {
+        return requestStatusChange(orderId, newStatus);
+      }
+      return updateOrderStatus(orderId, newStatus);
+    }
+    return updateOrderStatus(orderId, newStatus);
+  };
+
+  const handleAvailabilityToggle = async (foodId, nextAvailability) => {
+    try {
+      const res = await axios.put(`/foods/${foodId}/availability`, {
+        isAvailable: nextAvailability,
+      });
+      setFoods(foods.map((food) => (food._id === foodId ? res.data : food)));
+    } catch (err) {
+      alert("❌ " + (err.response?.data?.message || "Failed to update availability"));
+    }
+  };
+
   const handleCancelSubscription = async () => {
     if (!window.confirm("Are you sure you want to cancel your subscription? You can continue using it until the end date.")) {
       return;
@@ -193,6 +297,55 @@ const RestaurantDashboard = () => {
       alert("❌ " + (err.response?.data?.message || "Failed to cancel subscription"));
     } finally {
       setCancelling(false);
+    }
+  };
+
+  const handleCreateInvite = async () => {
+    if (!inviteEmail) {
+      alert("Please enter a staff email");
+      return;
+    }
+
+    try {
+      const res = await axios.post("/staff/invites", {
+        email: inviteEmail,
+        role: inviteRole,
+      });
+      const inviteUrl = `${window.location.origin}/staff-invite/${res.data.inviteToken}`;
+      setLatestInviteLink(inviteUrl);
+      setInviteEmail("");
+      alert("✅ Invite created. Share the invite link with the staff member.");
+    } catch (err) {
+      alert("❌ " + (err.response?.data?.message || "Failed to create invite"));
+    }
+  };
+
+  const handleApproveStaff = async (staffId) => {
+    try {
+      await axios.put(`/staff/members/${staffId}/approve`);
+      fetchStaffData();
+      alert("✅ Staff member approved");
+    } catch (err) {
+      alert("❌ " + (err.response?.data?.message || "Failed to approve staff"));
+    }
+  };
+
+  const handleApproveStatusRequest = async (requestId) => {
+    try {
+      await axios.put(`/staff/status-requests/${requestId}/approve`);
+      fetchStaffData();
+      fetchRestaurantData();
+    } catch (err) {
+      alert("❌ " + (err.response?.data?.message || "Failed to approve request"));
+    }
+  };
+
+  const handleRejectStatusRequest = async (requestId) => {
+    try {
+      await axios.put(`/staff/status-requests/${requestId}/reject`);
+      fetchStaffData();
+    } catch (err) {
+      alert("❌ " + (err.response?.data?.message || "Failed to reject request"));
     }
   };
 
@@ -339,7 +492,10 @@ const RestaurantDashboard = () => {
 
         {/* Tabs */}
         <div className="flex gap-4 mb-6 border-b overflow-x-auto">
-          {["items", "orders", "subscription", "settings"].map((tab) => (
+          {(user?.userType === "RESTAURANT"
+            ? ["items", "orders", "subscription", "staff", "settings"]
+            : ["orders", "items"]
+          ).map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
@@ -349,7 +505,15 @@ const RestaurantDashboard = () => {
                   : "border-transparent text-gray-600 hover:text-gray-900"
               }`}
             >
-              {tab === "items" ? "📋 Menu Items" : tab === "orders" ? "📦 Orders" : tab === "subscription" ? "👑 Subscription" : "⚙️ Settings"}
+              {tab === "items"
+                ? "📋 Menu Items"
+                : tab === "orders"
+                ? "📦 Orders"
+                : tab === "subscription"
+                ? "👑 Subscription"
+                : tab === "staff"
+                ? "👥 Staff"
+                : "⚙️ Settings"}
               {(tab === "items" || tab === "orders") && ` (${tab === "items" ? stats.totalItems : stats.activeOrders})`}
             </button>
           ))}
@@ -359,7 +523,7 @@ const RestaurantDashboard = () => {
         {activeTab === "items" && (
           <div className="space-y-6">
             {/* Add Food Form */}
-            {!showAddForm && !showEditForm ? (
+            {user?.userType === "RESTAURANT" && !showAddForm && !showEditForm ? (
               <button
                 onClick={() => setShowAddForm(true)}
                 className="flex items-center gap-2 bg-gradient-to-r from-orange-500 to-red-500 text-white px-6 py-3 rounded-lg hover:shadow-lg transition font-semibold"
@@ -368,7 +532,7 @@ const RestaurantDashboard = () => {
               </button>
             ) : null}
 
-            {showAddForm && !showEditForm && (
+            {user?.userType === "RESTAURANT" && showAddForm && !showEditForm && (
               <div className="bg-white rounded-lg shadow-lg p-6">
                 <h2 className="text-2xl font-bold text-gray-800 mb-6">Add New Food Item</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
@@ -427,7 +591,7 @@ const RestaurantDashboard = () => {
               </div>
             )}
 
-            {showEditForm && editingFood && (
+            {user?.userType === "RESTAURANT" && showEditForm && editingFood && (
               <div className="bg-white rounded-lg shadow-lg p-6 border-l-4 border-orange-500">
                 <h2 className="text-2xl font-bold text-gray-800 mb-6">✏️ Edit Food Item</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
@@ -562,21 +726,38 @@ const RestaurantDashboard = () => {
                           <p className="text-lg font-bold text-yellow-500">{food.rating ? `${food.rating} ⭐` : "No ratings"}</p>
                         </div>
 
-                        {/* Actions */}
-                        <div className="flex gap-2">
+                        {/* Availability */}
+                        <div className="flex items-center justify-between mb-4">
+                          <p className="text-sm text-gray-600">Availability</p>
                           <button
-                            onClick={() => handleEditFood(food)}
-                            className="flex-1 flex items-center justify-center gap-2 bg-blue-50 hover:bg-blue-100 text-blue-600 py-2 rounded-lg transition font-semibold"
+                            onClick={() => handleAvailabilityToggle(food._id, !(food.isAvailable !== false))}
+                            className={`px-3 py-1 rounded-full text-xs font-semibold transition ${
+                              food.isAvailable !== false
+                                ? "bg-green-100 text-green-800"
+                                : "bg-gray-200 text-gray-700"
+                            }`}
                           >
-                            <Edit2 size={18} /> Edit
-                          </button>
-                          <button
-                            onClick={() => handleDeleteFood(food._id)}
-                            className="flex-1 flex items-center justify-center gap-2 bg-red-50 hover:bg-red-100 text-red-600 py-2 rounded-lg transition font-semibold"
-                          >
-                            <Trash2 size={18} /> Delete
+                            {food.isAvailable !== false ? "Available" : "Unavailable"}
                           </button>
                         </div>
+
+                        {/* Actions */}
+                        {user?.userType === "RESTAURANT" && (
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => handleEditFood(food)}
+                              className="flex-1 flex items-center justify-center gap-2 bg-blue-50 hover:bg-blue-100 text-blue-600 py-2 rounded-lg transition font-semibold"
+                            >
+                              <Edit2 size={18} /> Edit
+                            </button>
+                            <button
+                              onClick={() => handleDeleteFood(food._id)}
+                              className="flex-1 flex items-center justify-center gap-2 bg-red-50 hover:bg-red-100 text-red-600 py-2 rounded-lg transition font-semibold"
+                            >
+                              <Trash2 size={18} /> Delete
+                            </button>
+                          </div>
+                        )}
                       </div>
                     </div>
                   ))}
@@ -672,17 +853,21 @@ const RestaurantDashboard = () => {
                               </span>
                             </td>
                             <td className="py-4 px-6">
-                              <select
-                                value={order.status || "pending"}
-                                onChange={(e) => updateOrderStatus(order._id, e.target.value)}
-                                className="bg-white text-gray-900 px-3 py-1 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm font-semibold"
-                              >
-                                <option value="pending">Pending</option>
-                                <option value="confirmed">Confirmed</option>
-                                <option value="preparing">Preparing</option>
-                                <option value="ready">Ready</option>
-                                <option value="delivered">Delivered</option>
-                              </select>
+                              {user?.userType === "STAFF" && getAllowedStatusOptions().length === 0 ? (
+                                <span className="text-sm text-gray-500">View only</span>
+                              ) : (
+                                <select
+                                  value={(order.status || "PLACED").toString().toUpperCase()}
+                                  onChange={(e) => handleOrderStatusChange(order._id, e.target.value)}
+                                  className="bg-white text-gray-900 px-3 py-1 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm font-semibold"
+                                >
+                                  {getDisplayStatusOptions((order.status || "PLACED").toString().toUpperCase()).map((option) => (
+                                    <option key={option.value} value={option.value}>
+                                      {option.label}
+                                    </option>
+                                  ))}
+                                </select>
+                              )}
                             </td>
                           </tr>
                         ))}
@@ -954,6 +1139,146 @@ const RestaurantDashboard = () => {
                 Contact Support
                 <ArrowUpRight size={18} />
               </Link>
+            </div>
+          </div>
+        )}
+
+        {/* Staff Tab */}
+        {activeTab === "staff" && user?.userType === "RESTAURANT" && (
+          <div className="space-y-6">
+            <div className="bg-white rounded-xl shadow-lg p-8">
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">Invite Staff</h2>
+              <p className="text-gray-600 mb-6">Send an invite link for staff to create their account.</p>
+              <div className="flex flex-col md:flex-row gap-4">
+                <input
+                  type="email"
+                  placeholder="staff@email.com"
+                  value={inviteEmail}
+                  onChange={(e) => setInviteEmail(e.target.value)}
+                  className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                />
+                <select
+                  value={inviteRole}
+                  onChange={(e) => setInviteRole(e.target.value)}
+                  className="bg-white text-gray-900 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                >
+                  <option value="MANAGER">Manager</option>
+                  <option value="CHEF">Chef</option>
+                  <option value="DELIVERY">Delivery</option>
+                  <option value="STAFF">Staff</option>
+                </select>
+                <button
+                  onClick={handleCreateInvite}
+                  className="bg-gradient-to-r from-orange-500 to-red-500 text-white px-6 py-2 rounded-lg font-semibold hover:shadow-lg transition"
+                >
+                  Create Invite
+                </button>
+              </div>
+              {latestInviteLink && (
+                <div className="mt-4 bg-orange-50 border border-orange-200 rounded-lg p-3">
+                  <p className="text-sm text-orange-800 font-semibold mb-1">Invite Link</p>
+                  <p className="text-sm text-gray-700 break-all">{latestInviteLink}</p>
+                </div>
+              )}
+            </div>
+
+            <div className="bg-white rounded-xl shadow-lg p-8">
+              <h3 className="text-xl font-bold text-gray-900 mb-4">Pending Staff Approvals</h3>
+              {staffMembers.filter((member) => !member.approval).length === 0 ? (
+                <p className="text-gray-600">No pending staff approvals.</p>
+              ) : (
+                <div className="space-y-3">
+                  {staffMembers
+                    .filter((member) => !member.approval)
+                    .map((member) => (
+                      <div
+                        key={member._id}
+                        className="flex items-center justify-between border border-gray-200 rounded-lg p-4"
+                      >
+                        <div>
+                          <p className="font-semibold text-gray-900">{member.username}</p>
+                          <p className="text-sm text-gray-600">{member.email} • {member.staffRole}</p>
+                        </div>
+                        <button
+                          onClick={() => handleApproveStaff(member._id)}
+                          className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-semibold"
+                        >
+                          Approve
+                        </button>
+                      </div>
+                    ))}
+                </div>
+              )}
+            </div>
+
+            <div className="bg-white rounded-xl shadow-lg p-8">
+              <h3 className="text-xl font-bold text-gray-900 mb-4">Pending Status Change Requests</h3>
+              {pendingStatusRequests.length === 0 ? (
+                <p className="text-gray-600">No pending requests.</p>
+              ) : (
+                <div className="space-y-3">
+                  {pendingStatusRequests.map((request) => (
+                    <div
+                      key={request._id}
+                      className="flex flex-col md:flex-row md:items-center md:justify-between border border-gray-200 rounded-lg p-4"
+                    >
+                      <div className="mb-3 md:mb-0">
+                        <p className="font-semibold text-gray-900">
+                          Order #{request.orderId?._id?.slice(-6) || "N/A"}
+                        </p>
+                        <p className="text-sm text-gray-600">
+                          {request.requestedBy?.username || "Staff"} • {request.requestedBy?.staffRole || ""}
+                        </p>
+                        <p className="text-sm text-gray-700">
+                          {request.fromStatus} → {request.toStatus}
+                        </p>
+                      </div>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => handleApproveStatusRequest(request._id)}
+                          className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-semibold"
+                        >
+                          Approve
+                        </button>
+                        <button
+                          onClick={() => handleRejectStatusRequest(request._id)}
+                          className="bg-gray-200 hover:bg-gray-300 text-gray-700 px-4 py-2 rounded-lg font-semibold"
+                        >
+                          Reject
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="bg-white rounded-xl shadow-lg p-8">
+              <h3 className="text-xl font-bold text-gray-900 mb-4">All Staff Members</h3>
+              {staffMembers.length === 0 ? (
+                <p className="text-gray-600">No staff members added yet.</p>
+              ) : (
+                <div className="space-y-3">
+                  {staffMembers.map((member) => (
+                    <div
+                      key={member._id}
+                      className="flex items-center justify-between border border-gray-200 rounded-lg p-4"
+                    >
+                      <div>
+                        <p className="font-semibold text-gray-900">{member.username}</p>
+                        <p className="text-sm text-gray-600">{member.email} • {member.staffRole}</p>
+                      </div>
+                      <span
+                        className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                          member.approval ? "bg-green-100 text-green-800" : "bg-yellow-100 text-yellow-800"
+                        }`}
+                      >
+                        {member.approval ? "Approved" : "Pending"}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         )}

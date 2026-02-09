@@ -18,6 +18,7 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import { AuthProvider } from "./context/AuthProvider";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
+import StaffInvite from "./pages/auth/StaffInvite";
 
 function App() {
   return (
@@ -67,7 +68,7 @@ function App() {
           <Route
             path="/restaurant"
             element={
-              <ProtectedRoute role="RESTAURANT">
+              <ProtectedRoute role={["RESTAURANT", "STAFF"]}>
                 <RestaurantDashboard />
               </ProtectedRoute>
             }
@@ -83,6 +84,7 @@ function App() {
               </ProtectedRoute>
             }
           />
+          <Route path="/staff-invite/:token" element={<StaffInvite />} />
         </Routes>
           </main>
           <Footer />

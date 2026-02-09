@@ -7,6 +7,7 @@ const {
   getFoodsByRestaurant,
   updateFood,
   deleteFood,
+  updateAvailability,
 } = require("../controllers/foodController");
 
 const { protect, authorize } = require("../middlewares/authMiddleware");
@@ -17,6 +18,7 @@ router.get("/", getAllFoods);
 router.get("/restaurant/:id", getFoodsByRestaurant);
 router.get("/:id", getFoodById);
 router.put("/:id", protect, authorize("RESTAURANT"), updateFood);
+router.put("/:id/availability", protect, authorize("RESTAURANT", "STAFF"), updateAvailability);
 router.delete("/:id", protect, authorize("RESTAURANT"), deleteFood);
 
 module.exports = router;

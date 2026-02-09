@@ -15,6 +15,7 @@ const foodSchema = new mongoose.Schema(
     price: { type: Number, required: true },
     discount: { type: Number, default: 0 },
     rating: { type: Number, default: 0 },
+    isAvailable: { type: Boolean, default: true },
   },
   { timestamps: true }
 );

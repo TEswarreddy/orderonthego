@@ -9,6 +9,7 @@ const RestaurantLogin = () => {
     password: "",
   });
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
   const { login } = useContext(AuthContext);
   const navigate = useNavigate();
 
@@ -18,18 +19,19 @@ const RestaurantLogin = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
+    setError("");
     try {
       const res = await axios.post("/auth/login", form);
       
       // Only allow RESTAURANT and STAFF on this login page
       if (res.data.userType === "USER") {
-        alert("Please use the customer login for customer accounts");
+        setError("Please use the customer login for customer accounts");
         setLoading(false);
         return;
       }
 
       if (res.data.userType === "ADMIN") {
-        alert("Admin access is restricted. Please contact system administrator.");
+        setError("Admin access is restricted. Please contact system administrator.");
         setLoading(false);
         return;
       }
@@ -37,7 +39,8 @@ const RestaurantLogin = () => {
       login(res.data);
       navigate("/restaurant");
     } catch (err) {
-      alert(err.response?.data?.message || "Login failed");
+      const message = err.response?.data?.message || "Login failed";
+      setError(message);
     } finally {
       setLoading(false);
     }
@@ -70,6 +73,25 @@ const RestaurantLogin = () => {
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-5">
+            {error && (
+              <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                <div className="flex items-start">
+                  <svg className="w-5 h-5 text-red-600 mt-0.5 mr-2 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                  </svg>
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-red-800">{error}</p>
+                    {error.includes("not approved") && (
+                      <p className="text-xs text-red-700 mt-1">Please wait for admin approval or contact support.</p>
+                    )}
+                    {error.includes("pending") && (
+                      <p className="text-xs text-red-700 mt-1">Please wait for the restaurant owner to approve your account.</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Email Address

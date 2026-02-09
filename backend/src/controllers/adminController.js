@@ -1,3 +1,5 @@
+const bcrypt = require("bcryptjs");
+const crypto = require("crypto");
 const User = require("../models/User");
 const Order = require("../models/Order");
 const Restaurant = require("../models/Restaurant");
@@ -152,6 +154,9 @@ exports.approveRestaurant = async (req, res) => {
     if (!restaurant) {
       return res.status(404).json({ message: "Restaurant not found" });
     }
+
+    // Also update the User model's approval field
+    await User.findByIdAndUpdate(restaurant.ownerId._id, { approval: true });
 
     res.json({ message: "Restaurant approved successfully", restaurant });
   } catch (error) {
@@ -378,6 +383,132 @@ exports.deleteFoodAdmin = async (req, res) => {
     res.json({ message: "Food item deleted successfully" });
   } catch (error) {
     res.status(500).json({ message: "Failed to delete food", error: error.message });
+  }
+};
+
+// GET ALL STAFF (ADMIN)
+exports.getAllStaffAdmin = async (req, res) => {
+  try {
+    const staff = await User.find({ userType: "STAFF" })
+      .select("-password")
+      .sort({ createdAt: -1 });
+
+    res.json(staff);
+  } catch (error) {
+    res.status(500).json({ message: "Failed to fetch staff", error: error.message });
+  }
+};
+
+// CREATE STAFF (ADMIN)
+exports.createStaffAdmin = async (req, res) => {
+  try {
+    const {
+      username,
+      email,
+      password,
+      restaurantId,
+      staffRole,
+      phone,
+      address,
+      status,
+      approval,
+    } = req.body;
+
+    if (!username || !email || !password || !restaurantId) {
+      return res.status(400).json({
+        message: "Username, email, password, and restaurant are required",
+      });
+    }
+
+    const existingUser = await User.findOne({ email: email.toLowerCase().trim() });
+    if (existingUser) {
+      return res.status(400).json({ message: "Email already in use" });
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+
+    const staff = await User.create({
+      username,
+      email: email.toLowerCase().trim(),
+      password: hashedPassword,
+      userType: "STAFF",
+      staffRole,
+      restaurantId,
+      phone,
+      address,
+      status: status || "active",
+      approval: approval !== undefined ? Boolean(approval) : true,
+    });
+
+    const staffSafe = await User.findById(staff._id).select("-password");
+    res.status(201).json(staffSafe);
+  } catch (error) {
+    res.status(500).json({ message: "Failed to create staff", error: error.message });
+  }
+};
+
+// UPDATE STAFF (ADMIN)
+exports.updateStaffAdmin = async (req, res) => {
+  try {
+    const updates = { ...req.body };
+    if (updates.email) {
+      updates.email = updates.email.toLowerCase().trim();
+    }
+
+    if (updates.password) {
+      const salt = await bcrypt.genSalt(10);
+      updates.password = await bcrypt.hash(updates.password, salt);
+    } else {
+      delete updates.password;
+    }
+
+    const staff = await User.findOneAndUpdate(
+      { _id: req.params.id, userType: "STAFF" },
+      updates,
+      { new: true }
+    ).select("-password");
+
+    if (!staff) {
+      return res.status(404).json({ message: "Staff member not found" });
+    }
+
+    res.json(staff);
+  } catch (error) {
+    res.status(500).json({ message: "Failed to update staff", error: error.message });
+  }
+};
+
+// DELETE STAFF (ADMIN)
+exports.deleteStaffAdmin = async (req, res) => {
+  try {
+    const staff = await User.findOneAndDelete({ _id: req.params.id, userType: "STAFF" });
+    if (!staff) {
+      return res.status(404).json({ message: "Staff member not found" });
+    }
+
+    res.json({ message: "Staff member deleted successfully" });
+  } catch (error) {
+    res.status(500).json({ message: "Failed to delete staff", error: error.message });
+  }
+};
+
+// RESET STAFF PASSWORD (ADMIN)
+exports.resetStaffPasswordAdmin = async (req, res) => {
+  try {
+    const staff = await User.findOne({ _id: req.params.id, userType: "STAFF" });
+    if (!staff) {
+      return res.status(404).json({ message: "Staff member not found" });
+    }
+
+    const tempPassword = crypto.randomBytes(6).toString("base64url");
+    const salt = await bcrypt.genSalt(10);
+    staff.password = await bcrypt.hash(tempPassword, salt);
+    await staff.save();
+
+    res.json({ message: "Password reset successfully", tempPassword });
+  } catch (error) {
+    res.status(500).json({ message: "Failed to reset password", error: error.message });
   }
 };
 

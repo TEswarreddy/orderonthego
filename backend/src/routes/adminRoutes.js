@@ -15,6 +15,11 @@ const {
   createFoodAdmin,
   updateFoodAdmin,
   deleteFoodAdmin,
+  getAllStaffAdmin,
+  createStaffAdmin,
+  updateStaffAdmin,
+  deleteStaffAdmin,
+  resetStaffPasswordAdmin,
   getRevenueAnalytics,
   getOrderDistribution,
   getRestaurantStaff,
@@ -59,6 +64,13 @@ router.get("/foods", adminProtect, getAllFoodsAdmin);
 router.post("/foods", adminProtect, createFoodAdmin);
 router.put("/foods/:id", adminProtect, updateFoodAdmin);
 router.delete("/foods/:id", adminProtect, deleteFoodAdmin);
+
+// Staff Management
+router.get("/staff", adminProtect, getAllStaffAdmin);
+router.post("/staff", adminProtect, createStaffAdmin);
+router.put("/staff/:id", adminProtect, updateStaffAdmin);
+router.delete("/staff/:id", adminProtect, deleteStaffAdmin);
+router.post("/staff/:id/reset-password", adminProtect, resetStaffPasswordAdmin);
 
 // Analytics
 router.get("/analytics/revenue", adminProtect, getRevenueAnalytics);

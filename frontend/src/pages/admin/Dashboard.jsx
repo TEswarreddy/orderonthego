@@ -14,6 +14,7 @@ import {
   Home,
   BarChart3,
   Utensils,
+  UserCheck,
 } from "lucide-react";
 import StatCard from "./components/StatCard";
 import Modal from "./components/Modal";
@@ -24,6 +25,7 @@ import UsersTab from "./components/UsersTab";
 import RestaurantsTab from "./components/RestaurantsTab";
 import AnalyticsTab from "./components/AnalyticsTab";
 import FoodsTab from "./components/FoodsTab";
+import StaffTab from "./components/StaffTab";
 
 // Main Dashboard Component
 const AdminDashboard = () => {
@@ -37,11 +39,13 @@ const AdminDashboard = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
   const [foodAvailability, setFoodAvailability] = useState("all");
+  const [staffApproval, setStaffApproval] = useState("all");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [restaurantFoods, setRestaurantFoods] = useState([]);
   const [restaurantStaff, setRestaurantStaff] = useState([]);
   const [restaurantDetailsLoading, setRestaurantDetailsLoading] = useState(false);
   const [foods, setFoods] = useState([]);
+  const [staff, setStaff] = useState([]);
   const defaultFoodForm = {
     restaurantId: "",
     title: "",
@@ -54,6 +58,19 @@ const AdminDashboard = () => {
     isAvailable: true,
   };
   const [foodForm, setFoodForm] = useState(defaultFoodForm);
+  const [foodErrors, setFoodErrors] = useState({});
+  const defaultStaffForm = {
+    username: "",
+    email: "",
+    password: "",
+    restaurantId: "",
+    staffRole: "STAFF",
+    phone: "",
+    address: "",
+    status: "active",
+    approval: true,
+  };
+  const [staffForm, setStaffForm] = useState(defaultStaffForm);
 
   // Modal states
   const [modals, setModals] = useState({
@@ -61,6 +78,7 @@ const AdminDashboard = () => {
     user: false,
     restaurant: false,
     food: false,
+    staff: false,
   });
   const [selectedItem, setSelectedItem] = useState(null);
   const [editForm, setEditForm] = useState({});
@@ -70,18 +88,27 @@ const AdminDashboard = () => {
     const fetchDashboardData = async () => {
       try {
         setLoading(true);
-        const [statsRes, ordersRes, usersRes, revenueRes, foodsRes] = await Promise.all([
+        const [
+          statsRes,
+          ordersRes,
+          usersRes,
+          revenueRes,
+          foodsRes,
+          staffRes,
+        ] = await Promise.all([
           axios.get("/admin/stats"),
           axios.get("/admin/orders"),
           axios.get("/admin/users"),
           axios.get("/admin/analytics/revenue"),
           axios.get("/admin/foods"),
+          axios.get("/admin/staff"),
         ]);
 
         setStats(statsRes.data);
         setOrders(ordersRes.data.orders || []);
         setUsers(usersRes.data.users || []);
         setFoods(foodsRes.data || []);
+        setStaff(staffRes.data || []);
         setRevenueData(
           revenueRes.data.map((item) => ({
             label: new Date(item.date).toLocaleDateString("en-US", {
@@ -147,6 +174,7 @@ const AdminDashboard = () => {
             }
           : defaultFoodForm
       );
+      setFoodErrors({});
     }
   };
 
@@ -159,6 +187,7 @@ const AdminDashboard = () => {
     }
     if (type === "food") {
       setFoodForm(defaultFoodForm);
+      setFoodErrors({});
     }
   };
 
@@ -230,7 +259,26 @@ const AdminDashboard = () => {
     }
   };
 
+  const validateFoodForm = () => {
+    const errors = {};
+    if (!foodForm.restaurantId) {
+      errors.restaurantId = "Restaurant is required";
+    }
+    if (!foodForm.title.trim()) {
+      errors.title = "Title is required";
+    }
+    if (foodForm.price === "" || Number(foodForm.price) <= 0) {
+      errors.price = "Price must be greater than 0";
+    }
+
+    setFoodErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
   const handleCreateFood = async () => {
+    if (!validateFoodForm()) {
+      return;
+    }
     try {
       const payload = {
         ...foodForm,
@@ -247,6 +295,9 @@ const AdminDashboard = () => {
   };
 
   const handleUpdateFood = async () => {
+    if (!validateFoodForm()) {
+      return;
+    }
     try {
       const payload = {
         ...foodForm,
@@ -272,6 +323,110 @@ const AdminDashboard = () => {
       setFoods(foods.filter((food) => food._id !== foodId));
     } catch (error) {
       alert("Failed to delete food item");
+    }
+  };
+
+  const handleToggleFoodAvailability = async (food) => {
+    try {
+      const response = await axios.put(`/admin/foods/${food._id}`, {
+        isAvailable: !food.isAvailable,
+      });
+      setFoods(
+        foods.map((item) => (item._id === food._id ? response.data : item))
+      );
+    } catch (error) {
+      alert("Failed to update availability");
+    }
+  };
+
+  const handleCreateStaff = async () => {
+    try {
+      const payload = {
+        ...staffForm,
+        approval: Boolean(staffForm.approval),
+      };
+      const response = await axios.post("/admin/staff", payload);
+      setStaff([response.data, ...staff]);
+      closeModal("staff");
+    } catch (error) {
+      alert("Failed to create staff member");
+    }
+  };
+
+  const handleUpdateStaff = async () => {
+    try {
+      const payload = { ...staffForm };
+      if (!payload.password) {
+        delete payload.password;
+      }
+      const response = await axios.put(`/admin/staff/${selectedItem._id}`, payload);
+      setStaff(
+        staff.map((member) =>
+          member._id === selectedItem._id ? response.data : member
+        )
+      );
+      closeModal("staff");
+    } catch (error) {
+      alert("Failed to update staff member");
+    }
+  };
+
+  const handleDeleteStaff = async (staffId) => {
+    if (!window.confirm("Are you sure you want to delete this staff member?")) {
+      return;
+    }
+
+    try {
+      await axios.delete(`/admin/staff/${staffId}`);
+      setStaff(staff.filter((member) => member._id !== staffId));
+    } catch (error) {
+      alert("Failed to delete staff member");
+    }
+  };
+
+  const handleApproveStaff = async (member) => {
+    try {
+      const response = await axios.put(`/admin/staff/${member._id}`, {
+        approval: true,
+      });
+      setStaff(
+        staff.map((item) => (item._id === member._id ? response.data : item))
+      );
+    } catch (error) {
+      alert("Failed to approve staff member");
+    }
+  };
+
+  const handleRejectStaff = async (member) => {
+    try {
+      const response = await axios.put(`/admin/staff/${member._id}`, {
+        approval: false,
+      });
+      setStaff(
+        staff.map((item) => (item._id === member._id ? response.data : item))
+      );
+    } catch (error) {
+      alert("Failed to reject staff member");
+    }
+  };
+
+  const handleResetStaffPassword = async (member) => {
+    if (!window.confirm(`Reset password for ${member.username}?`)) {
+      return;
+    }
+
+    try {
+      const response = await axios.post(
+        `/admin/staff/${member._id}/reset-password`
+      );
+      const tempPassword = response.data?.tempPassword;
+      if (tempPassword) {
+        alert(`Temporary password: ${tempPassword}`);
+      } else {
+        alert("Password reset successfully");
+      }
+    } catch (error) {
+      alert("Failed to reset password");
     }
   };
 
@@ -336,12 +491,35 @@ const AdminDashboard = () => {
 
     return matchesSearch && matchesAvailability;
   });
+  const filteredStaff = staff
+    .map((member) => ({
+      ...member,
+      restaurantName:
+        restaurants.find((restaurant) => restaurant._id === member.restaurantId)
+          ?.title || "N/A",
+    }))
+    .filter((member) => {
+      const term = searchTerm.toLowerCase();
+      const matchesSearch =
+        !searchTerm ||
+        (member.username || "").toLowerCase().includes(term) ||
+        (member.email || "").toLowerCase().includes(term) ||
+        (member.restaurantName || "").toLowerCase().includes(term);
+
+      const matchesApproval =
+        staffApproval === "all" ||
+        (staffApproval === "approved" && member.approval) ||
+        (staffApproval === "pending" && !member.approval);
+
+      return matchesSearch && matchesApproval;
+    });
 
   const navItems = [
     { id: "overview", label: "Overview", icon: Home },
     { id: "orders", label: "Orders", icon: ShoppingBag },
     { id: "users", label: "Users", icon: Users },
     { id: "restaurants", label: "Restaurants", icon: Store },
+    { id: "staff", label: "Staff", icon: UserCheck },
     { id: "foods", label: "Foods", icon: Utensils },
     { id: "analytics", label: "Analytics", icon: BarChart3 },
   ];
@@ -351,6 +529,7 @@ const AdminDashboard = () => {
     setSearchTerm("");
     setFilterStatus("all");
     setFoodAvailability("all");
+    setStaffApproval("all");
     if (closeSidebar) {
       setSidebarOpen(false);
     }
@@ -486,6 +665,23 @@ const AdminDashboard = () => {
           />
         )}
 
+        {/* Staff Tab */}
+        {activeTab === "staff" && (
+          <StaffTab
+            searchTerm={searchTerm}
+            setSearchTerm={setSearchTerm}
+            staffApproval={staffApproval}
+            setStaffApproval={setStaffApproval}
+            filteredStaff={filteredStaff}
+            onCreate={() => openModal("staff")}
+            onEdit={(item) => openModal("staff", item)}
+            onDelete={(item) => handleDeleteStaff(item._id)}
+            onApprove={handleApproveStaff}
+            onReject={handleRejectStaff}
+            onResetPassword={handleResetStaffPassword}
+          />
+        )}
+
         {/* Foods Tab */}
         {activeTab === "foods" && (
           <FoodsTab
@@ -497,6 +693,7 @@ const AdminDashboard = () => {
             onCreate={() => openModal("food")}
             onEdit={(item) => openModal("food", item)}
             onDelete={(item) => handleDeleteFood(item._id)}
+            onToggleAvailability={handleToggleFoodAvailability}
           />
         )}
 
@@ -855,6 +1052,11 @@ const AdminDashboard = () => {
                   </option>
                 ))}
               </select>
+              {foodErrors.restaurantId && (
+                <p className="text-xs text-red-600 mt-1">
+                  {foodErrors.restaurantId}
+                </p>
+              )}
             </div>
             <div>
               <label className="text-sm text-gray-600">Title</label>
@@ -864,6 +1066,9 @@ const AdminDashboard = () => {
                 onChange={(e) => setFoodForm({ ...foodForm, title: e.target.value })}
                 className="w-full bg-white text-gray-900 px-4 py-2 border-2 border-gray-200 rounded-lg focus:border-orange-500 outline-none transition mt-1"
               />
+              {foodErrors.title && (
+                <p className="text-xs text-red-600 mt-1">{foodErrors.title}</p>
+              )}
             </div>
             <div>
               <label className="text-sm text-gray-600">Price</label>
@@ -873,6 +1078,9 @@ const AdminDashboard = () => {
                 onChange={(e) => setFoodForm({ ...foodForm, price: e.target.value })}
                 className="w-full bg-white text-gray-900 px-4 py-2 border-2 border-gray-200 rounded-lg focus:border-orange-500 outline-none transition mt-1"
               />
+              {foodErrors.price && (
+                <p className="text-xs text-red-600 mt-1">{foodErrors.price}</p>
+              )}
             </div>
             <div>
               <label className="text-sm text-gray-600">Category</label>
@@ -945,6 +1153,132 @@ const AdminDashboard = () => {
             </button>
             <button
               onClick={() => (selectedItem ? handleUpdateFood() : handleCreateFood())}
+              className="flex-1 bg-gradient-to-r from-orange-500 to-orange-600 text-white py-2 rounded-lg font-semibold hover:shadow-lg transition"
+            >
+              {selectedItem ? "Update" : "Create"}
+            </button>
+          </div>
+        </div>
+      </Modal>
+
+      <Modal
+        title={selectedItem ? "Edit Staff" : "Add Staff"}
+        isOpen={modals.staff}
+        onClose={() => closeModal("staff")}
+        isWide
+      >
+        <div className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="text-sm text-gray-600">Username</label>
+              <input
+                type="text"
+                value={staffForm.username}
+                onChange={(e) => setStaffForm({ ...staffForm, username: e.target.value })}
+                className="w-full bg-white text-gray-900 px-4 py-2 border-2 border-gray-200 rounded-lg focus:border-orange-500 outline-none transition mt-1"
+              />
+            </div>
+            <div>
+              <label className="text-sm text-gray-600">Email</label>
+              <input
+                type="email"
+                value={staffForm.email}
+                onChange={(e) => setStaffForm({ ...staffForm, email: e.target.value })}
+                className="w-full bg-white text-gray-900 px-4 py-2 border-2 border-gray-200 rounded-lg focus:border-orange-500 outline-none transition mt-1"
+              />
+            </div>
+            <div>
+              <label className="text-sm text-gray-600">
+                {selectedItem ? "New Password (optional)" : "Password"}
+              </label>
+              <input
+                type="password"
+                value={staffForm.password}
+                onChange={(e) => setStaffForm({ ...staffForm, password: e.target.value })}
+                className="w-full bg-white text-gray-900 px-4 py-2 border-2 border-gray-200 rounded-lg focus:border-orange-500 outline-none transition mt-1"
+              />
+            </div>
+            <div>
+              <label className="text-sm text-gray-600">Restaurant</label>
+              <select
+                value={staffForm.restaurantId}
+                onChange={(e) => setStaffForm({ ...staffForm, restaurantId: e.target.value })}
+                className="w-full bg-white text-gray-900 px-4 py-2 border-2 border-gray-200 rounded-lg focus:border-orange-500 outline-none transition mt-1"
+              >
+                <option value="">Select restaurant</option>
+                {restaurants.map((restaurant) => (
+                  <option key={restaurant._id} value={restaurant._id}>
+                    {restaurant.title}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="text-sm text-gray-600">Role</label>
+              <select
+                value={staffForm.staffRole}
+                onChange={(e) => setStaffForm({ ...staffForm, staffRole: e.target.value })}
+                className="w-full bg-white text-gray-900 px-4 py-2 border-2 border-gray-200 rounded-lg focus:border-orange-500 outline-none transition mt-1"
+              >
+                <option value="MANAGER">Manager</option>
+                <option value="CHEF">Chef</option>
+                <option value="DELIVERY">Delivery</option>
+                <option value="STAFF">Staff</option>
+              </select>
+            </div>
+            <div>
+              <label className="text-sm text-gray-600">Status</label>
+              <select
+                value={staffForm.status}
+                onChange={(e) => setStaffForm({ ...staffForm, status: e.target.value })}
+                className="w-full bg-white text-gray-900 px-4 py-2 border-2 border-gray-200 rounded-lg focus:border-orange-500 outline-none transition mt-1"
+              >
+                <option value="active">Active</option>
+                <option value="inactive">Inactive</option>
+                <option value="banned">Banned</option>
+              </select>
+            </div>
+            <div>
+              <label className="text-sm text-gray-600">Phone</label>
+              <input
+                type="text"
+                value={staffForm.phone}
+                onChange={(e) => setStaffForm({ ...staffForm, phone: e.target.value })}
+                className="w-full bg-white text-gray-900 px-4 py-2 border-2 border-gray-200 rounded-lg focus:border-orange-500 outline-none transition mt-1"
+              />
+            </div>
+            <div>
+              <label className="text-sm text-gray-600">Address</label>
+              <input
+                type="text"
+                value={staffForm.address}
+                onChange={(e) => setStaffForm({ ...staffForm, address: e.target.value })}
+                className="w-full bg-white text-gray-900 px-4 py-2 border-2 border-gray-200 rounded-lg focus:border-orange-500 outline-none transition mt-1"
+              />
+            </div>
+            <div className="flex items-center gap-2 mt-6">
+              <input
+                id="staff-approval"
+                type="checkbox"
+                checked={Boolean(staffForm.approval)}
+                onChange={(e) => setStaffForm({ ...staffForm, approval: e.target.checked })}
+                className="h-4 w-4"
+              />
+              <label htmlFor="staff-approval" className="text-sm text-gray-700">
+                Approved
+              </label>
+            </div>
+          </div>
+
+          <div className="flex gap-3 pt-4 border-t">
+            <button
+              onClick={() => closeModal("staff")}
+              className="flex-1 bg-gray-200 text-gray-900 py-2 rounded-lg font-semibold hover:bg-gray-300 transition"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={() => (selectedItem ? handleUpdateStaff() : handleCreateStaff())}
               className="flex-1 bg-gradient-to-r from-orange-500 to-orange-600 text-white py-2 rounded-lg font-semibold hover:shadow-lg transition"
             >
               {selectedItem ? "Update" : "Create"}

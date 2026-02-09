@@ -6,6 +6,7 @@ const DataTable = ({
   onEdit,
   onDelete,
   onView,
+  renderActions,
   maxRows = 10,
   loading = false,
 }) => {
@@ -40,6 +41,18 @@ const DataTable = ({
                   <td key={col} className="py-4 px-6 text-gray-700">
                     {col === "Amount" || col === "Revenue"
                       ? `₹${(row[col.toLowerCase()] ?? 0).toFixed(2)}`
+                      : col === "Approval"
+                      ? (
+                          <span
+                            className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                              row.approval
+                                ? "bg-green-100 text-green-800"
+                                : "bg-yellow-100 text-yellow-800"
+                            }`}
+                          >
+                            {row.approval ? "approved" : "pending"}
+                          </span>
+                        )
                       : col === "Status"
                       ? (
                           <span
@@ -63,33 +76,41 @@ const DataTable = ({
                       : String(row[col.toLowerCase()] || "N/A")}
                   </td>
                 ))}
-                <td className="py-4 px-6 flex gap-2">
-                  {onView && (
-                    <button
-                      onClick={() => onView(row)}
-                      className="p-2 hover:bg-gray-200 rounded-lg transition"
-                      title="View"
-                    >
-                      <Eye size={18} className="text-gray-600" />
-                    </button>
-                  )}
-                  {onEdit && (
-                    <button
-                      onClick={() => onEdit(row)}
-                      className="p-2 hover:bg-blue-100 rounded-lg transition"
-                      title="Edit"
-                    >
-                      <Edit2 size={18} className="text-blue-600" />
-                    </button>
-                  )}
-                  {onDelete && (
-                    <button
-                      onClick={() => onDelete(row)}
-                      className="p-2 hover:bg-red-100 rounded-lg transition"
-                      title="Delete"
-                    >
-                      <Trash2 size={18} className="text-red-600" />
-                    </button>
+                <td className="py-4 px-6">
+                  {renderActions ? (
+                    <div className="flex flex-wrap gap-2">
+                      {renderActions(row)}
+                    </div>
+                  ) : (
+                    <div className="flex gap-2">
+                      {onView && (
+                        <button
+                          onClick={() => onView(row)}
+                          className="p-2 hover:bg-gray-200 rounded-lg transition"
+                          title="View"
+                        >
+                          <Eye size={18} className="text-gray-600" />
+                        </button>
+                      )}
+                      {onEdit && (
+                        <button
+                          onClick={() => onEdit(row)}
+                          className="p-2 hover:bg-blue-100 rounded-lg transition"
+                          title="Edit"
+                        >
+                          <Edit2 size={18} className="text-blue-600" />
+                        </button>
+                      )}
+                      {onDelete && (
+                        <button
+                          onClick={() => onDelete(row)}
+                          className="p-2 hover:bg-red-100 rounded-lg transition"
+                          title="Delete"
+                        >
+                          <Trash2 size={18} className="text-red-600" />
+                        </button>
+                      )}
+                    </div>
                   )}
                 </td>
               </tr>

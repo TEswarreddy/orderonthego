@@ -10,23 +10,15 @@ import {
   Eye,
   Search,
   Download,
-  Plus,
   X,
   CheckCircle,
   Clock,
-  Award,
   Store,
-  Activity,
   DollarSign,
   MapPin,
   Phone,
-  Mail,
-  Save,
-  XCircle,
   Home,
-  User,
   BarChart3,
-  PieChart,
 } from "lucide-react";
 
 // StatCard Component
@@ -212,6 +204,7 @@ const AdminDashboard = () => {
   const [revenueData, setRevenueData] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   // Modal states
   const [modals, setModals] = useState({
@@ -391,6 +384,14 @@ const AdminDashboard = () => {
   const filteredUsers = getFilteredUsers();
   const filteredRestaurants = getFilteredRestaurants();
 
+  const navItems = [
+    { id: "overview", label: "Overview", icon: Home },
+    { id: "orders", label: "Orders", icon: ShoppingBag },
+    { id: "users", label: "Users", icon: Users },
+    { id: "restaurants", label: "Restaurants", icon: Store },
+    { id: "analytics", label: "Analytics", icon: BarChart3 },
+  ];
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 flex items-center justify-center">
@@ -403,17 +404,116 @@ const AdminDashboard = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50 py-8 px-4">
-      <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-5xl font-bold text-gray-900 mb-2">
-            Admin Dashboard
-          </h1>
-          <p className="text-gray-600">
-            Manage your platform, users, orders, and restaurants
-          </p>
-        </div>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50">
+      <div className="flex">
+        <aside className="hidden md:flex md:flex-col w-64 min-h-screen bg-white border-r border-gray-200 p-6 sticky top-0">
+          <div className="flex items-center gap-2 mb-8">
+            <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center text-white font-bold">
+              AO
+            </div>
+            <div>
+              <p className="text-sm text-gray-500">Admin</p>
+              <p className="font-bold text-gray-900">Dashboard</p>
+            </div>
+          </div>
+
+          <nav className="flex-1 space-y-2">
+            {navItems.map((item) => (
+              <button
+                key={item.id}
+                onClick={() => {
+                  setActiveTab(item.id);
+                  setSearchTerm("");
+                  setFilterStatus("all");
+                }}
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-semibold transition ${
+                  activeTab === item.id
+                    ? "bg-gradient-to-r from-orange-500 to-orange-600 text-white shadow"
+                    : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+                }`}
+              >
+                <item.icon size={18} />
+                {item.label}
+              </button>
+            ))}
+          </nav>
+
+          <div className="mt-6 rounded-2xl bg-gradient-to-br from-orange-50 to-blue-50 p-4">
+            <p className="text-xs text-gray-600">System Status</p>
+            <div className="flex items-center gap-2 mt-2">
+              <span className="h-2 w-2 rounded-full bg-green-500"></span>
+              <p className="text-sm font-semibold text-gray-800">All services operational</p>
+            </div>
+          </div>
+        </aside>
+
+        {sidebarOpen && (
+          <div className="fixed inset-0 z-40 md:hidden">
+            <div
+              className="absolute inset-0 bg-black/40"
+              onClick={() => setSidebarOpen(false)}
+            ></div>
+            <aside className="absolute left-0 top-0 bottom-0 w-64 bg-white p-6 shadow-xl">
+              <div className="flex items-center justify-between mb-8">
+                <div className="flex items-center gap-2">
+                  <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center text-white font-bold">
+                    AO
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-500">Admin</p>
+                    <p className="font-bold text-gray-900">Dashboard</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setSidebarOpen(false)}
+                  className="p-2 rounded-lg hover:bg-gray-100"
+                >
+                  <X size={20} className="text-gray-600" />
+                </button>
+              </div>
+              <nav className="space-y-2">
+                {navItems.map((item) => (
+                  <button
+                    key={item.id}
+                    onClick={() => {
+                      setActiveTab(item.id);
+                      setSearchTerm("");
+                      setFilterStatus("all");
+                      setSidebarOpen(false);
+                    }}
+                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-semibold transition ${
+                      activeTab === item.id
+                        ? "bg-gradient-to-r from-orange-500 to-orange-600 text-white shadow"
+                        : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+                    }`}
+                  >
+                    <item.icon size={18} />
+                    {item.label}
+                  </button>
+                ))}
+              </nav>
+            </aside>
+          </div>
+        )}
+
+        <main className="flex-1 py-8 px-4">
+          <div className="max-w-7xl mx-auto">
+            <div className="flex items-center justify-between mb-8">
+              <div>
+                <h1 className="text-5xl font-bold text-gray-900 mb-2">
+                  Admin Dashboard
+                </h1>
+                <p className="text-gray-600">
+                  Manage your platform, users, orders, and restaurants
+                </p>
+              </div>
+              <button
+                onClick={() => setSidebarOpen(true)}
+                className="md:hidden px-4 py-2 rounded-lg bg-white border border-gray-200 text-gray-700 hover:bg-gray-50"
+              >
+                Menu
+              </button>
+            </div>
 
         {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4 mb-8">
@@ -454,29 +554,6 @@ const AdminDashboard = () => {
             value={stats.deliveredToday || 0}
             color="from-green-500 to-green-600"
           />
-        </div>
-
-        {/* Tab Navigation */}
-        <div className="flex gap-2 mb-6 bg-white rounded-2xl p-2 shadow-sm overflow-x-auto">
-          {["overview", "orders", "users", "restaurants", "analytics"].map(
-            (tab) => (
-              <button
-                key={tab}
-                onClick={() => {
-                  setActiveTab(tab);
-                  setSearchTerm("");
-                  setFilterStatus("all");
-                }}
-                className={`px-6 py-3 font-semibold rounded-xl whitespace-nowrap transition ${
-                  activeTab === tab
-                    ? "bg-gradient-to-r from-orange-500 to-orange-600 text-white shadow-lg"
-                    : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
-                }`}
-              >
-                {tab.charAt(0).toUpperCase() + tab.slice(1)}
-              </button>
-            )
-          )}
         </div>
 
         {/* Overview Tab */}
@@ -571,26 +648,30 @@ const AdminDashboard = () => {
                   icon: Download,
                   title: "Generate Reports",
                   color: "from-blue-500 to-blue-600",
+                  target: "analytics",
                 },
                 {
                   icon: Users,
                   title: "Manage Users",
                   color: "from-purple-500 to-purple-600",
+                  target: "users",
                 },
                 {
                   icon: Store,
                   title: "Restaurants",
                   color: "from-indigo-500 to-indigo-600",
+                  target: "restaurants",
                 },
                 {
                   icon: BarChart3,
                   title: "View Analytics",
                   color: "from-orange-500 to-orange-600",
+                  target: "analytics",
                 },
               ].map((action, idx) => (
                 <button
                   key={idx}
-                  onClick={() => setActiveTab(action.title.toLowerCase().replace(" ", ""))}
+                  onClick={() => setActiveTab(action.target)}
                   className={`bg-gradient-to-br ${action.color} text-white p-6 rounded-2xl cursor-pointer transition transform hover:-translate-y-1 hover:shadow-lg flex flex-col items-center gap-3`}
                 >
                   <action.icon size={28} />
@@ -827,6 +908,8 @@ const AdminDashboard = () => {
             </div>
           </div>
         )}
+          </div>
+        </main>
       </div>
 
       {/* Order Modal */}

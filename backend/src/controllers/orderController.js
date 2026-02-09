@@ -2,6 +2,14 @@ const Order = require("../models/Order");
 const Cart = require("../models/Cart");
 const OrderStatusRequest = require("../models/OrderStatusRequest");
 const Restaurant = require("../models/Restaurant");
+const sgMail = require("@sendgrid/mail");
+
+const SENDGRID_API_KEY = process.env.SENDGRID_API_KEY;
+const SENDGRID_SENDER = process.env.SENDGRID_SENDER;
+
+if (SENDGRID_API_KEY) {
+  sgMail.setApiKey(SENDGRID_API_KEY);
+}
 
 const resolveRestaurantId = async (user) => {
   if (user.userType === "STAFF") {
@@ -55,6 +63,42 @@ const getStaffAllowedStatuses = (role) => {
     default:
       return [];
   }
+};
+
+const sendOrderStatusEmail = async (order, status) => {
+  if (!SENDGRID_API_KEY || !SENDGRID_SENDER) return;
+  if (!order?.userId?.email) return;
+
+  // Fetch restaurant details
+  const restaurant = await Restaurant.findById(order.restaurantId);
+  const restaurantName = restaurant?.title || "Order On The Go";
+  
+  const statusLabel = status.replace(/_/g, " ");
+  const subject = `Order Update from ${restaurantName}: ${statusLabel}`;
+  const orderId = order._id?.toString().slice(-6) || "N/A";
+  const itemCount = (order.items || []).reduce((sum, item) => sum + (item.quantity || 0), 0);
+  const itemsList = (order.items || [])
+    .map((item) => `${item.title || "Item"} x${item.quantity || 0}`)
+    .join(", ");
+
+  const html = `
+    <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #111;">
+      <h2>Your order status has been updated</h2>
+      <p><strong>Restaurant:</strong> ${restaurantName}</p>
+      <p><strong>Order ID:</strong> #${orderId}</p>
+      <p><strong>New Status:</strong> ${statusLabel}</p>
+      <p><strong>Items:</strong> ${itemCount} total</p>
+      <p><strong>Item details:</strong> ${itemsList || "Not available"}</p>
+      <p>Thank you for ordering with Order On The Go.</p>
+    </div>
+  `;
+
+  await sgMail.send({
+    to: order.userId.email,
+    from: SENDGRID_SENDER,
+    subject,
+    html,
+  });
 };
 
 // PLACE ORDER
@@ -135,6 +179,14 @@ exports.updateOrderStatus = async (req, res) => {
 
   order.status = nextStatus;
   await order.save();
+
+  if (nextStatus === "OUT_FOR_DELIVERY" || nextStatus === "DELIVERED") {
+    try {
+      await sendOrderStatusEmail(order, nextStatus);
+    } catch (error) {
+      console.error("Failed to send order status email:", error);
+    }
+  }
   res.json(order);
 };
 

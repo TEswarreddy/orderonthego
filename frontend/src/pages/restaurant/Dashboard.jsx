@@ -566,7 +566,7 @@ const RestaurantDashboard = () => {
         <div className="flex gap-4 mb-6 border-b overflow-x-auto md:hidden">
           {(user?.userType === "RESTAURANT"
             ? ["items", "orders", "subscription", "staff", "settings"]
-            : ["orders", "items"]
+            : ["orders", "items", "profile"]
           ).map((tab) => (
             <button
               key={tab}
@@ -585,6 +585,8 @@ const RestaurantDashboard = () => {
                 ? "👑 Subscription"
                 : tab === "staff"
                 ? "👥 Staff"
+                : tab === "profile"
+                ? "👤 Profile"
                 : "⚙️ Settings"}
               {(tab === "items" || tab === "orders") && ` (${tab === "items" ? stats.totalItems : stats.activeOrders})`}
             </button>

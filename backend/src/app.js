@@ -16,8 +16,11 @@ const restaurantRoutes = require("./routes/restaurantRoutes");
 
 const app = express();
 
+// Remove trailing slash from FRONTEND_BASE_URL to prevent CORS mismatches
+const allowedOrigin = (process.env.FRONTEND_BASE_URL || "http://localhost:5173").replace(/\/$/, "");
+
 app.use(cors({
-  origin: process.env.FRONTEND_BASE_URL || "http://localhost:5173",
+  origin: allowedOrigin,
   credentials: true
 }));
 

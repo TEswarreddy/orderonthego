@@ -1,6 +1,7 @@
 import { useState } from "react";
 import axios from "../../api/axios";
 import { useNavigate, Link } from "react-router-dom";
+import VerificationModal from "../../components/VerificationModal";
 
 const UserRegister = () => {
   const [form, setForm] = useState({
@@ -11,6 +12,9 @@ const UserRegister = () => {
     address: "",
   });
   const [loading, setLoading] = useState(false);
+  const [showVerification, setShowVerification] = useState(false);
+  const [registeredEmail, setRegisteredEmail] = useState("");
+  const [registeredPhone, setRegisteredPhone] = useState("");
 
   const navigate = useNavigate();
 
@@ -21,17 +25,30 @@ const UserRegister = () => {
     e.preventDefault();
     setLoading(true);
     try {
-      await axios.post("/auth/register", {
+      const response = await axios.post("/auth/register", {
         ...form,
         userType: "USER",
       });
-      alert("Registered successfully! You can now login.");
-      navigate("/login");
+      
+      setRegisteredEmail(form.email);
+      setRegisteredPhone(form.phone);
+      setShowVerification(true);
+      alert(response.data.message || "Registration successful! Please verify your email.");
     } catch (err) {
       alert(err.response?.data?.message || "Registration failed");
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleVerificationComplete = () => {
+    setShowVerification(false);
+    navigate("/login/user");
+  };
+
+  const handleSkipVerification = () => {
+    setShowVerification(false);
+    navigate("/login/user");
   };
 
   return (
@@ -144,6 +161,16 @@ const UserRegister = () => {
           </div>
         </div>
       </div>
+
+      {/* Verification Modal */}
+      {showVerification && (
+        <VerificationModal
+          email={registeredEmail}
+          phone={registeredPhone}
+          onVerificationComplete={handleVerificationComplete}
+          onSkip={handleSkipVerification}
+        />
+      )}
     </div>
   );
 };

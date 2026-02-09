@@ -7,6 +7,11 @@ const userSchema = new mongoose.Schema(
     password: { type: String, required: true },
     phone: { type: String },
     address: { type: String },
+    emailVerified: { type: Boolean, default: false },
+    phoneVerified: { type: Boolean, default: false },
+    emailVerificationToken: { type: String },
+    phoneVerificationToken: { type: String },
+    verificationTokenExpiry: { type: Date },
     userType: {
       type: String,
       enum: ["USER", "RESTAURANT", "ADMIN", "STAFF"],

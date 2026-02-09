@@ -1,6 +1,7 @@
 import { useState } from "react";
 import axios from "../../api/axios";
 import { useNavigate, Link } from "react-router-dom";
+import VerificationModal from "../../components/VerificationModal";
 
 const RestaurantRegister = () => {
   const [form, setForm] = useState({
@@ -14,6 +15,9 @@ const RestaurantRegister = () => {
     description: "",
   });
   const [loading, setLoading] = useState(false);
+  const [showVerification, setShowVerification] = useState(false);
+  const [registeredEmail, setRegisteredEmail] = useState("");
+  const [registeredPhone, setRegisteredPhone] = useState("");
 
   const navigate = useNavigate();
 
@@ -24,17 +28,30 @@ const RestaurantRegister = () => {
     e.preventDefault();
     setLoading(true);
     try {
-      await axios.post("/auth/register", {
+      const response = await axios.post("/auth/register", {
         ...form,
         userType: "RESTAURANT",
       });
-      alert("Restaurant registered successfully! Your account is pending admin approval. You will be notified once approved.");
-      navigate("/login");
+      
+      setRegisteredEmail(form.email);
+      setRegisteredPhone(form.phone);
+      setShowVerification(true);
+      alert(response.data.message || "Registration successful! Please verify your email. Your account is pending admin approval.");
     } catch (err) {
       alert(err.response?.data?.message || "Registration failed");
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleVerificationComplete = () => {
+    setShowVerification(false);
+    navigate("/login/restaurant");
+  };
+
+  const handleSkipVerification = () => {
+    setShowVerification(false);
+    navigate("/login/restaurant");
   };
 
   return (
@@ -212,6 +229,16 @@ const RestaurantRegister = () => {
           </div>
         </div>
       </div>
+
+      {/* Verification Modal */}
+      {showVerification && (
+        <VerificationModal
+          email={registeredEmail}
+          phone={registeredPhone}
+          onVerificationComplete={handleVerificationComplete}
+          onSkip={handleSkipVerification}
+        />
+      )}
     </div>
   );
 };

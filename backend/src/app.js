@@ -11,6 +11,7 @@ const paymentRoutes = require("./routes/paymentRoutes");
 const reviewRoutes = require("./routes/reviewRoutes");
 const subscriptionRoutes = require("./routes/subscriptionRoutes");
 const staffRoutes = require("./routes/staffRoutes");
+const verificationRoutes = require("./routes/verificationRoutes");
 
 const app = express();
 
@@ -26,6 +27,7 @@ app.use("/api/payment", paymentRoutes);
 app.use("/api/reviews", reviewRoutes);
 app.use("/api/subscriptions", subscriptionRoutes);
 app.use("/api/staff", staffRoutes);
+app.use("/api/verification", verificationRoutes);
 
 app.get("/", (req, res) => {
   res.send("SB Foods API is running 🚀");

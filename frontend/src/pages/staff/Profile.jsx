@@ -4,6 +4,7 @@ import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import LoadingSpinner from "../../components/LoadingSpinner";
 import { Upload, Trash2 } from "lucide-react";
+import VerificationModal from "../../components/VerificationModal";
 
 const StaffProfile = () => {
   const { user, login } = useContext(AuthContext);
@@ -19,6 +20,7 @@ const StaffProfile = () => {
     address: "",
   });
   const [updateSuccess, setUpdateSuccess] = useState("");
+  const [showVerificationModal, setShowVerificationModal] = useState(false);
 
   useEffect(() => {
     if (!user || user.userType !== "STAFF") {
@@ -368,6 +370,14 @@ const StaffProfile = () => {
                       </p>
                     </div>
                   </div>
+                  <div className="mt-6 flex justify-end">
+                    <button
+                      onClick={() => setIsEditing(true)}
+                      className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+                    >
+                      Update Profile
+                    </button>
+                  </div>
                 </div>
               </div>
             ) : (
@@ -445,13 +455,24 @@ const StaffProfile = () => {
             </div>
             <div className="p-4 bg-gray-50 rounded-lg">
               <p className="text-sm text-gray-600">Email Verification</p>
-              <p className="text-lg font-semibold text-gray-900">
-                {profile.emailVerified ? (
-                  <span className="text-green-600">✓ Verified</span>
-                ) : (
-                  <span className="text-yellow-600">Pending</span>
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-lg font-semibold text-gray-900">
+                  {profile.emailVerified ? (
+                    <span className="text-green-600">✓ Verified</span>
+                  ) : (
+                    <span className="text-yellow-600">Pending</span>
+                  )}
+                </p>
+                {!profile.emailVerified && (
+                  <button
+                    type="button"
+                    onClick={() => setShowVerificationModal(true)}
+                    className="text-sm font-semibold text-blue-600 hover:text-blue-700"
+                  >
+                    Verify Email
+                  </button>
                 )}
-              </p>
+              </div>
             </div>
             <div className="p-4 bg-gray-50 rounded-lg">
               <p className="text-sm text-gray-600">Approval Status</p>
@@ -466,6 +487,19 @@ const StaffProfile = () => {
           </div>
         </div>
       </div>
+
+      {showVerificationModal && (
+        <VerificationModal
+          email={profile.email}
+          phone={profile.phone}
+          onVerificationComplete={() => {
+            setShowVerificationModal(false);
+            setUpdateSuccess("Email verified successfully!");
+            fetchProfile();
+          }}
+          onSkip={() => setShowVerificationModal(false)}
+        />
+      )}
     </div>
   );
 };

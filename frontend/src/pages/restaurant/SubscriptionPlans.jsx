@@ -13,24 +13,24 @@ const SubscriptionPlans = () => {
   const [subscribing, setSubscribing] = useState(null);
 
   useEffect(() => {
-    fetchPlansAndSubscription();
-  }, []);
+    const fetchPlansAndSubscription = async () => {
+      try {
+        setLoading(true);
+        const [plansRes, subRes] = await Promise.all([
+          axios.get("/subscriptions/plans"),
+          user && user.userType === "RESTAURANT" ? axios.get("/subscriptions/my-subscription") : Promise.resolve(null),
+        ]);
+        setPlans(plansRes.data || []);
+        setCurrentSubscription(subRes?.data || null);
+      } catch (err) {
+        console.error("Failed to fetch subscription data:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  const fetchPlansAndSubscription = async () => {
-    try {
-      setLoading(true);
-      const [plansRes, subRes] = await Promise.all([
-        axios.get("/subscriptions/plans"),
-        user && user.userType === "RESTAURANT" ? axios.get("/subscriptions/my-subscription") : Promise.resolve(null),
-      ]);
-      setPlans(plansRes.data || []);
-      setCurrentSubscription(subRes?.data || null);
-    } catch (err) {
-      console.error("Failed to fetch subscription data:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
+    fetchPlansAndSubscription();
+  }, [user]);
 
   const handleSubscribe = async (planName) => {
     if (!user) {
@@ -55,7 +55,7 @@ const SubscriptionPlans = () => {
       if (planName === "FREE") {
         await axios.post("/subscriptions/subscribe", { plan: "FREE" });
         alert("✅ Successfully downgraded to FREE plan");
-        fetchPlansAndSubscription();
+        window.location.reload();
       } else {
         // For paid plans, integrate with Razorpay
         const plan = plans.find((p) => p.name === planName);
@@ -84,7 +84,7 @@ const SubscriptionPlans = () => {
                 },
               });
               alert(`✅ Successfully subscribed to ${planName} plan!`);
-              fetchPlansAndSubscription();
+              window.location.reload();
             } catch (err) {
               alert("❌ " + (err.response?.data?.message || "Subscription failed"));
             }

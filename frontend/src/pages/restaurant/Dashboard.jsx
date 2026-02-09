@@ -16,6 +16,7 @@ import {
   LayoutGrid,
   ClipboardList,
   Users,
+  User,
   Settings,
 } from "lucide-react";
 import { Link } from "react-router-dom";
@@ -25,6 +26,7 @@ import MenuItemsTab from "./components/MenuItemsTab";
 import OrdersTab from "./components/OrdersTab";
 import SubscriptionTab from "./components/SubscriptionTab";
 import StaffTab from "./components/StaffTab";
+import StaffProfileTab from "./components/StaffProfileTab";
 import SettingsTab from "./components/SettingsTab";
 
 const RestaurantDashboard = () => {
@@ -55,6 +57,7 @@ const RestaurantDashboard = () => {
   const [filterCategory, setFilterCategory] = useState("all");
   const [orderSearch, setOrderSearch] = useState("");
   const [orderFilter, setOrderFilter] = useState("all");
+  const [restaurantProfile, setRestaurantProfile] = useState(null);
   const [newFood, setNewFood] = useState({
     title: "",
     price: "",
@@ -137,12 +140,14 @@ const RestaurantDashboard = () => {
       if (user?.userType === "RESTAURANT") {
         // Fetch subscription usage and plans
         try {
-          const [usageRes, plansRes] = await Promise.all([
+          const [usageRes, plansRes, profileRes] = await Promise.all([
             axios.get("/subscriptions/usage"),
             axios.get("/subscriptions/plans"),
+            axios.get("/restaurants/profile"),
           ]);
           setSubscriptionUsage(usageRes.data);
           setAvailablePlans(plansRes.data || []);
+          setRestaurantProfile(profileRes.data);
         } catch (err) {
           if (err.response?.status === 401) {
             console.warn("⚠️ Subscription session expired. Please log in again.");
@@ -392,6 +397,7 @@ const RestaurantDashboard = () => {
     : [
         { id: "orders", label: "Orders", icon: ClipboardList },
         { id: "items", label: "Menu Items", icon: LayoutGrid },
+        { id: "profile", label: "Profile", icon: User },
       ];
 
   const handleNavigate = (tabId, closeMobile) => {
@@ -430,7 +436,17 @@ const RestaurantDashboard = () => {
           <div className="py-8 px-4">
             <div className="max-w-7xl mx-auto">
               <h1 className="text-4xl font-bold text-gray-900 mb-2">Restaurant Dashboard</h1>
-              <p className="text-gray-600 mb-8">Manage your menu and orders</p>
+              <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
+                <p className="text-gray-600">Manage your menu and orders</p>
+                {user?.userType === "STAFF" && (
+                  <button
+                    onClick={() => setActiveTab("profile")}
+                    className="px-4 py-2 rounded-lg bg-blue-600 text-white font-semibold hover:bg-blue-700 transition"
+                  >
+                    Update Profile
+                  </button>
+                )}
+              </div>
 
         {/* Subscription Card */}
         {subscriptionUsage && (
@@ -459,7 +475,7 @@ const RestaurantDashboard = () => {
 
                 {/* Usage Stats */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                  <div className="bg-white bg-opacity-20 rounded-lg p-4">
+                  <div className=" bg-opacity-20 rounded-lg p-4">
                     <p className="text-sm text-orange-100 mb-1">Menu Items</p>
                     <div className="flex items-baseline gap-2">
                       <p className="text-3xl font-bold">
@@ -475,7 +491,7 @@ const RestaurantDashboard = () => {
                     </div>
                   </div>
 
-                  <div className="bg-white bg-opacity-20 rounded-lg p-4">
+                  <div className=" bg-opacity-20 rounded-lg p-4">
                     <p className="text-sm text-orange-100 mb-1">Orders Today</p>
                     <div className="flex items-baseline gap-2">
                       <p className="text-3xl font-bold">
@@ -643,11 +659,17 @@ const RestaurantDashboard = () => {
           />
         )}
 
+        {/* Staff Profile Tab */}
+        {activeTab === "profile" && user?.userType === "STAFF" && (
+          <StaffProfileTab user={user} />
+        )}
+
         {/* Settings Tab */}
         {activeTab === "settings" && (
           <SettingsTab
             user={user}
             stats={stats}
+            restaurantProfile={restaurantProfile}
           />
         )}
             </div>

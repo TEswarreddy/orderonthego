@@ -1,7 +1,7 @@
 import { TrendingUp } from "lucide-react";
 import { Link } from "react-router-dom";
 
-const SettingsTab = ({ user, stats }) => (
+const SettingsTab = ({ user, stats, restaurantProfile }) => (
   <div className="space-y-6">
     {/* Restaurant Profile */}
     <div className="bg-white rounded-xl shadow-lg p-8">
@@ -14,7 +14,7 @@ const SettingsTab = ({ user, stats }) => (
           <label className="block text-sm font-semibold text-gray-600 mb-2">Restaurant Name</label>
           <input
             type="text"
-            value={user?.name || ""}
+            value={restaurantProfile?.restaurant?.title || user?.username || ""}
             disabled
             className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-700"
           />

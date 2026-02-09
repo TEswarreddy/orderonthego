@@ -50,7 +50,7 @@ const SubscriptionTab = ({
               <button
                 onClick={handleCancelSubscription}
                 disabled={cancelling}
-                className="bg-white bg-opacity-20 hover:bg-opacity-30 text-white px-6 py-2 rounded-lg font-semibold transition"
+                className="bg-red-600 bg-opacity-20 hover:bg-opacity-30 text-white px-6 py-2 rounded-lg font-semibold transition"
               >
                 {cancelling ? "Cancelling..." : "Cancel Subscription"}
               </button>

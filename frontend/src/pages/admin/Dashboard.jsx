@@ -15,6 +15,7 @@ import {
   BarChart3,
   Utensils,
   UserCheck,
+  PieChart,
 } from "lucide-react";
 import StatCard from "./components/StatCard";
 import Modal from "./components/Modal";
@@ -26,6 +27,7 @@ import RestaurantsTab from "./components/RestaurantsTab";
 import AnalyticsTab from "./components/AnalyticsTab";
 import FoodsTab from "./components/FoodsTab";
 import StaffTab from "./components/StaffTab";
+import RevenueTab from "./components/RevenueTab";
 
 // Main Dashboard Component
 const AdminDashboard = () => {
@@ -71,6 +73,8 @@ const AdminDashboard = () => {
     approval: true,
   };
   const [staffForm, setStaffForm] = useState(defaultStaffForm);
+  const [restaurantEditMode, setRestaurantEditMode] = useState(false);
+  const [restaurantFormData, setRestaurantFormData] = useState({});
 
   // Modal states
   const [modals, setModals] = useState({
@@ -160,6 +164,15 @@ const AdminDashboard = () => {
     setEditForm(item ? { ...item } : {});
     setModals({ ...modals, [type]: true });
     if (type === "restaurant" && item?._id) {
+      setRestaurantEditMode(false);
+      setRestaurantFormData({
+        title: item.title || "",
+        cuisineType: item.cuisineType || "",
+        description: item.description || "",
+        address: item.address || "",
+        phone: item.phone || "",
+        status: item.status || "pending",
+      });
       fetchRestaurantDetails(item._id);
     }
     if (type === "food") {
@@ -184,6 +197,8 @@ const AdminDashboard = () => {
     if (type === "restaurant") {
       setRestaurantFoods([]);
       setRestaurantStaff([]);
+      setRestaurantEditMode(false);
+      setRestaurantFormData({});
     }
     if (type === "food") {
       setFoodForm(defaultFoodForm);
@@ -256,6 +271,28 @@ const AdminDashboard = () => {
       alert("Restaurant approved successfully");
     } catch (error) {
       alert("Failed to approve restaurant");
+    }
+  };
+
+  const handleUpdateRestaurant = async () => {
+    try {
+      const response = await axios.put(
+        `/admin/restaurants/${selectedItem._id}`,
+        restaurantFormData
+      );
+      
+      setRestaurants(
+        restaurants.map((r) =>
+          r._id === selectedItem._id ? response.data.restaurant : r
+        )
+      );
+      
+      setSelectedItem(response.data.restaurant);
+      setRestaurantEditMode(false);
+      alert("Restaurant updated successfully");
+    } catch (error) {
+      console.error("Error updating restaurant:", error);
+      alert("Failed to update restaurant");
     }
   };
 
@@ -521,6 +558,7 @@ const AdminDashboard = () => {
     { id: "restaurants", label: "Restaurants", icon: Store },
     { id: "staff", label: "Staff", icon: UserCheck },
     { id: "foods", label: "Foods", icon: Utensils },
+    { id: "revenue", label: "Revenue", icon: DollarSign },
     { id: "analytics", label: "Analytics", icon: BarChart3 },
   ];
 
@@ -695,6 +733,11 @@ const AdminDashboard = () => {
             onDelete={(item) => handleDeleteFood(item._id)}
             onToggleAvailability={handleToggleFoodAvailability}
           />
+        )}
+
+        {/* Revenue Tab */}
+        {activeTab === "revenue" && (
+          <RevenueTab />
         )}
 
         {/* Analytics Tab */}
@@ -884,146 +927,283 @@ const AdminDashboard = () => {
       >
         {selectedItem && (
           <div className="space-y-6">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="text-sm text-gray-600">Name</label>
-                <p className="font-bold text-gray-900">{selectedItem.title}</p>
+            {restaurantEditMode ? (
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-sm font-medium text-gray-700">
+                      Restaurant Name
+                    </label>
+                    <input
+                      type="text"
+                      value={restaurantFormData.title}
+                      onChange={(e) =>
+                        setRestaurantFormData({
+                          ...restaurantFormData,
+                          title: e.target.value,
+                        })
+                      }
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-700">
+                      Cuisine Type
+                    </label>
+                    <input
+                      type="text"
+                      value={restaurantFormData.cuisineType}
+                      onChange={(e) =>
+                        setRestaurantFormData({
+                          ...restaurantFormData,
+                          cuisineType: e.target.value,
+                        })
+                      }
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="text-sm font-medium text-gray-700">
+                    Description
+                  </label>
+                  <textarea
+                    value={restaurantFormData.description}
+                    onChange={(e) =>
+                      setRestaurantFormData({
+                        ...restaurantFormData,
+                        description: e.target.value,
+                      })
+                    }
+                    rows="3"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-sm font-medium text-gray-700">
+                      Phone
+                    </label>
+                    <input
+                      type="tel"
+                      value={restaurantFormData.phone}
+                      onChange={(e) =>
+                        setRestaurantFormData({
+                          ...restaurantFormData,
+                          phone: e.target.value,
+                        })
+                      }
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-700">
+                      Address
+                    </label>
+                    <input
+                      type="text"
+                      value={restaurantFormData.address}
+                      onChange={(e) =>
+                        setRestaurantFormData({
+                          ...restaurantFormData,
+                          address: e.target.value,
+                        })
+                      }
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="text-sm font-medium text-gray-700">
+                    Status
+                  </label>
+                  <select
+                    value={restaurantFormData.status}
+                    onChange={(e) =>
+                      setRestaurantFormData({
+                        ...restaurantFormData,
+                        status: e.target.value,
+                      })
+                    }
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                  >
+                    <option value="pending">Pending</option>
+                    <option value="approved">Approved</option>
+                    <option value="rejected">Rejected</option>
+                    <option value="inactive">Inactive</option>
+                  </select>
+                </div>
+
+                <div className="flex gap-3">
+                  <button
+                    onClick={handleUpdateRestaurant}
+                    className="flex-1 bg-green-500 hover:bg-green-600 text-white py-2 rounded-lg font-semibold transition"
+                  >
+                    Save Changes
+                  </button>
+                  <button
+                    onClick={() => setRestaurantEditMode(false)}
+                    className="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-900 py-2 rounded-lg font-semibold transition"
+                  >
+                    Cancel
+                  </button>
+                </div>
               </div>
-              <div>
-                <label className="text-sm text-gray-600">Cuisine Type</label>
-                <p className="font-semibold text-gray-700">
-                  {selectedItem.cuisineType}
-                </p>
-              </div>
-              <div>
-                <label className="text-sm text-gray-600">Status</label>
-                <span
-                  className={`inline-block px-3 py-1 rounded-full text-sm font-semibold ${
-                    selectedItem.status === "approved"
-                      ? "bg-green-100 text-green-800"
-                      : "bg-yellow-100 text-yellow-800"
-                  }`}
+            ) : (
+              <>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-sm text-gray-600">Name</label>
+                    <p className="font-bold text-gray-900">{selectedItem.title}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm text-gray-600">Cuisine Type</label>
+                    <p className="font-semibold text-gray-700">
+                      {selectedItem.cuisineType}
+                    </p>
+                  </div>
+                  <div>
+                    <label className="text-sm text-gray-600">Status</label>
+                    <span
+                      className={`inline-block px-3 py-1 rounded-full text-sm font-semibold ${
+                        selectedItem.status === "approved"
+                          ? "bg-green-100 text-green-800"
+                          : "bg-yellow-100 text-yellow-800"
+                      }`}
+                    >
+                      {selectedItem.status}
+                    </span>
+                  </div>
+                  <div>
+                    <label className="text-sm text-gray-600">Owner</label>
+                    <p className="font-semibold text-gray-700">
+                      {selectedItem.ownerId?.username || "N/A"}
+                    </p>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="text-sm text-gray-600">Description</label>
+                  <p className="text-gray-700">{selectedItem.description || "N/A"}</p>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="flex items-center gap-2 text-gray-700">
+                    <Phone size={18} />
+                    {selectedItem.phone}
+                  </div>
+                  <div className="flex items-center gap-2 text-gray-700">
+                    <MapPin size={18} />
+                    {selectedItem.address}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  <div className="bg-gray-50 rounded-xl p-4">
+                    <div className="flex items-center justify-between mb-3">
+                      <h3 className="font-semibold text-gray-900">Food Items</h3>
+                      <span className="text-xs text-gray-500">
+                        {restaurantFoods.length} items
+                      </span>
+                    </div>
+                    {restaurantDetailsLoading ? (
+                      <p className="text-sm text-gray-500">Loading food items...</p>
+                    ) : restaurantFoods.length > 0 ? (
+                      <div className="space-y-2 max-h-60 overflow-y-auto">
+                        {restaurantFoods.map((food) => (
+                          <div
+                            key={food._id}
+                            className="flex items-center justify-between bg-white p-3 rounded-lg border"
+                          >
+                            <div>
+                              <p className="font-semibold text-gray-900">
+                                {food.title}
+                              </p>
+                              <p className="text-xs text-gray-500">
+                                {food.category || "Uncategorized"}
+                              </p>
+                            </div>
+                            <p className="font-semibold text-gray-900">
+                              ₹{Number(food.price || 0).toFixed(2)}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-sm text-gray-500">No food items found.</p>
+                    )}
+                  </div>
+
+                  <div className="bg-gray-50 rounded-xl p-4">
+                    <div className="flex items-center justify-between mb-3">
+                      <h3 className="font-semibold text-gray-900">Staff</h3>
+                      <span className="text-xs text-gray-500">
+                        {restaurantStaff.length} members
+                      </span>
+                    </div>
+                    {restaurantDetailsLoading ? (
+                      <p className="text-sm text-gray-500">Loading staff...</p>
+                    ) : restaurantStaff.length > 0 ? (
+                      <div className="space-y-2 max-h-60 overflow-y-auto">
+                        {restaurantStaff.map((staff) => (
+                          <div
+                            key={staff._id}
+                            className="flex items-center justify-between bg-white p-3 rounded-lg border"
+                          >
+                            <div>
+                              <p className="font-semibold text-gray-900">
+                                {staff.username}
+                              </p>
+                              <p className="text-xs text-gray-500">
+                                {staff.staffRole || "STAFF"}
+                              </p>
+                            </div>
+                            <span
+                              className={`px-2 py-1 rounded-full text-xs font-semibold ${
+                                staff.approval
+                                  ? "bg-green-100 text-green-800"
+                                  : "bg-yellow-100 text-yellow-800"
+                              }`}
+                            >
+                              {staff.approval ? "Approved" : "Pending"}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-sm text-gray-500">No staff found.</p>
+                    )}
+                  </div>
+                </div>
+
+                <div className="flex gap-3">
+                  {selectedItem.status === "pending" && (
+                    <button
+                      onClick={() => handleApproveRestaurant(selectedItem._id)}
+                      className="flex-1 bg-green-500 hover:bg-green-600 text-white py-2 rounded-lg font-semibold transition"
+                    >
+                      Approve Restaurant
+                    </button>
+                  )}
+                  <button
+                    onClick={() => setRestaurantEditMode(true)}
+                    className="flex-1 bg-blue-500 hover:bg-blue-600 text-white py-2 rounded-lg font-semibold transition"
+                  >
+                    Edit Restaurant
+                  </button>
+                </div>
+
+                <button
+                  onClick={() => closeModal("restaurant")}
+                  className="w-full bg-gray-200 text-gray-900 py-2 rounded-lg font-semibold hover:bg-gray-300 transition"
                 >
-                  {selectedItem.status}
-                </span>
-              </div>
-              <div>
-                <label className="text-sm text-gray-600">Owner</label>
-                <p className="font-semibold text-gray-700">
-                  {selectedItem.ownerId?.username || "N/A"}
-                </p>
-              </div>
-            </div>
-
-            <div>
-              <label className="text-sm text-gray-600">Description</label>
-              <p className="text-gray-700">{selectedItem.description || "N/A"}</p>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="flex items-center gap-2 text-gray-700">
-                <Phone size={18} />
-                {selectedItem.phone}
-              </div>
-              <div className="flex items-center gap-2 text-gray-700">
-                <MapPin size={18} />
-                {selectedItem.address}
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <div className="bg-gray-50 rounded-xl p-4">
-                <div className="flex items-center justify-between mb-3">
-                  <h3 className="font-semibold text-gray-900">Food Items</h3>
-                  <span className="text-xs text-gray-500">
-                    {restaurantFoods.length} items
-                  </span>
-                </div>
-                {restaurantDetailsLoading ? (
-                  <p className="text-sm text-gray-500">Loading food items...</p>
-                ) : restaurantFoods.length > 0 ? (
-                  <div className="space-y-2 max-h-60 overflow-y-auto">
-                    {restaurantFoods.map((food) => (
-                      <div
-                        key={food._id}
-                        className="flex items-center justify-between bg-white p-3 rounded-lg border"
-                      >
-                        <div>
-                          <p className="font-semibold text-gray-900">
-                            {food.title}
-                          </p>
-                          <p className="text-xs text-gray-500">
-                            {food.category || "Uncategorized"}
-                          </p>
-                        </div>
-                        <p className="font-semibold text-gray-900">
-                          ₹{Number(food.price || 0).toFixed(2)}
-                        </p>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-sm text-gray-500">No food items found.</p>
-                )}
-              </div>
-
-              <div className="bg-gray-50 rounded-xl p-4">
-                <div className="flex items-center justify-between mb-3">
-                  <h3 className="font-semibold text-gray-900">Staff</h3>
-                  <span className="text-xs text-gray-500">
-                    {restaurantStaff.length} members
-                  </span>
-                </div>
-                {restaurantDetailsLoading ? (
-                  <p className="text-sm text-gray-500">Loading staff...</p>
-                ) : restaurantStaff.length > 0 ? (
-                  <div className="space-y-2 max-h-60 overflow-y-auto">
-                    {restaurantStaff.map((staff) => (
-                      <div
-                        key={staff._id}
-                        className="flex items-center justify-between bg-white p-3 rounded-lg border"
-                      >
-                        <div>
-                          <p className="font-semibold text-gray-900">
-                            {staff.username}
-                          </p>
-                          <p className="text-xs text-gray-500">
-                            {staff.staffRole || "STAFF"}
-                          </p>
-                        </div>
-                        <span
-                          className={`px-2 py-1 rounded-full text-xs font-semibold ${
-                            staff.approval
-                              ? "bg-green-100 text-green-800"
-                              : "bg-yellow-100 text-yellow-800"
-                          }`}
-                        >
-                          {staff.approval ? "Approved" : "Pending"}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-sm text-gray-500">No staff found.</p>
-                )}
-              </div>
-            </div>
-
-            {selectedItem.status === "pending" && (
-              <button
-                onClick={() => handleApproveRestaurant(selectedItem._id)}
-                className="w-full bg-gradient-to-r from-green-500 to-green-600 text-white py-2 rounded-lg font-semibold hover:shadow-lg transition"
-              >
-                Approve Restaurant
-              </button>
+                  Close
+                </button>
+              </>
             )}
-
-            <button
-              onClick={() => closeModal("restaurant")}
-              className="w-full bg-gray-200 text-gray-900 py-2 rounded-lg font-semibold hover:bg-gray-300 transition"
-            >
-              Close
-            </button>
           </div>
         )}
       </Modal>

@@ -117,16 +117,7 @@ const Profile = () => {
 
     try {
       setImageLoading(true);
-      const token = localStorage.getItem("token");
-
-      await axios.delete(
-        "http://localhost:5000/api/auth/profile/image",
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      await axios.delete("/auth/profile/image");
 
       setProfile((prev) => ({
         ...prev,

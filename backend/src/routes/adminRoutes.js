@@ -7,6 +7,7 @@ const {
   updateUserStatus,
   deleteUser,
   approveRestaurant,
+  updateRestaurantAdmin,
   getAllOrders,
   getOrderById,
   updateOrderStatus,
@@ -27,6 +28,10 @@ const {
   updateAdminProfile,
   uploadAdminProfileImage,
   deleteAdminProfileImage,
+  getFoodRevenueAnalytics,
+  getSubscriptionRevenueAnalytics,
+  getRevenueByRestaurant,
+  getRevenueStats,
 } = require("../controllers/adminController");
 
 const { protect, authorize } = require("../middlewares/authMiddleware");
@@ -51,6 +56,7 @@ router.delete("/users/:id", adminProtect, deleteUser);
 
 // Restaurant Management
 router.put("/approve-restaurant/:id", adminProtect, approveRestaurant);
+router.put("/restaurants/:id", adminProtect, updateRestaurantAdmin);
 router.get("/restaurants/:id/staff", adminProtect, getRestaurantStaff);
 
 // Orders Management
@@ -75,6 +81,10 @@ router.post("/staff/:id/reset-password", adminProtect, resetStaffPasswordAdmin);
 // Analytics
 router.get("/analytics/revenue", adminProtect, getRevenueAnalytics);
 router.get("/analytics/orders-distribution", adminProtect, getOrderDistribution);
+router.get("/analytics/revenue/food", adminProtect, getFoodRevenueAnalytics);
+router.get("/analytics/revenue/subscriptions", adminProtect, getSubscriptionRevenueAnalytics);
+router.get("/analytics/revenue/by-restaurant", adminProtect, getRevenueByRestaurant);
+router.get("/analytics/revenue/stats", adminProtect, getRevenueStats);
 
 // Middleware to handle image upload
 function uploadProfileImageMiddleware(req, res, next) {

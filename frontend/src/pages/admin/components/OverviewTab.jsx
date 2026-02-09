@@ -1,4 +1,6 @@
-import { BarChart3, CheckCircle, Clock, Download, Store, TrendingUp, Users } from "lucide-react";
+import { BarChart3, CheckCircle, Clock, Download, Store, TrendingUp, Users, DollarSign } from "lucide-react";
+import { useState, useEffect } from "react";
+import axios from "../../../api/axios";
 import DataTable from "./DataTable";
 import SimpleChart from "./SimpleChart";
 
@@ -9,11 +11,66 @@ const OverviewTab = ({
   restaurants,
   setActiveTab,
   openModal,
-}) => (
-  <div className="space-y-6">
-    {revenueData.length > 0 && (
-      <SimpleChart data={revenueData} title="7-Day Revenue Trend" />
-    )}
+}) => {
+  const [revenueStats, setRevenueStats] = useState({});
+
+  useEffect(() => {
+    fetchRevenueStats();
+  }, []);
+
+  const fetchRevenueStats = async () => {
+    try {
+      const res = await axios.get("/admin/analytics/revenue/stats");
+      setRevenueStats(res.data);
+    } catch (error) {
+      console.error("Error fetching revenue stats:", error);
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Revenue Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-2xl shadow-lg p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-600 mb-1">Food Revenue</p>
+              <p className="text-3xl font-bold text-orange-600">
+                ₹{(revenueStats.foodRevenue || 0).toLocaleString()}
+              </p>
+            </div>
+            <DollarSign size={32} className="text-orange-600" />
+          </div>
+        </div>
+
+        <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-2xl shadow-lg p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-600 mb-1">Subscription Revenue</p>
+              <p className="text-3xl font-bold text-blue-600">
+                ₹{(revenueStats.subscriptionRevenue || 0).toLocaleString()}
+              </p>
+            </div>
+            <TrendingUp size={32} className="text-blue-600" />
+          </div>
+        </div>
+
+        <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-2xl shadow-lg p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-600 mb-1">Total Revenue</p>
+              <p className="text-3xl font-bold text-green-600">
+                ₹{(revenueStats.totalRevenue || 0).toLocaleString()}
+              </p>
+            </div>
+            <DollarSign size={32} className="text-green-600" />
+          </div>
+        </div>
+      </div>
+
+      {revenueData.length > 0 && (
+        <SimpleChart data={revenueData} title="7-Day Revenue Trend" />
+      )}
 
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
       {[
@@ -112,6 +169,12 @@ const OverviewTab = ({
           color: "from-orange-500 to-orange-600",
           target: "analytics",
         },
+        {
+          icon: DollarSign,
+          title: "View Revenue",
+          color: "from-green-500 to-green-600",
+          target: "revenue",
+        },
       ].map((action, idx) => (
         <button
           key={idx}
@@ -124,6 +187,6 @@ const OverviewTab = ({
       ))}
     </div>
   </div>
-);
+  );
 
 export default OverviewTab;

@@ -169,6 +169,44 @@ exports.approveRestaurant = async (req, res) => {
   }
 };
 
+// UPDATE RESTAURANT (ADMIN)
+exports.updateRestaurantAdmin = async (req, res) => {
+  try {
+    const { title, cuisineType, description, address, phone, status } =
+      req.body;
+
+    const restaurant = await Restaurant.findById(req.params.id);
+    if (!restaurant) {
+      return res.status(404).json({ message: "Restaurant not found" });
+    }
+
+    // Update only provided fields
+    if (title) restaurant.title = title;
+    if (cuisineType) restaurant.cuisineType = cuisineType;
+    if (description) restaurant.description = description;
+    if (address) restaurant.address = address;
+    if (phone) restaurant.phone = phone;
+    if (status) restaurant.status = status;
+
+    await restaurant.save();
+
+    const updatedRestaurant = await Restaurant.findById(req.params.id).populate(
+      "ownerId",
+      "username email phone"
+    );
+
+    res.json({
+      message: "Restaurant updated successfully",
+      restaurant: updatedRestaurant,
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: "Failed to update restaurant",
+      error: error.message,
+    });
+  }
+};
+
 // GET ALL ORDERS
 exports.getAllOrders = async (req, res) => {
   try {
@@ -706,5 +744,253 @@ exports.deleteAdminProfileImage = async (req, res) => {
     res.json({ message: "Admin profile image deleted successfully" });
   } catch (error) {
     res.status(500).json({ message: "Error deleting image", error: error.message });
+  }
+};
+
+// GET FOOD REVENUE ANALYTICS
+exports.getFoodRevenueAnalytics = async (req, res) => {
+  try {
+    const days = 7;
+    const revenues = [];
+
+    for (let i = days - 1; i >= 0; i--) {
+      const date = new Date();
+      date.setDate(date.getDate() - i);
+      date.setHours(0, 0, 0, 0);
+
+      const nextDate = new Date(date);
+      nextDate.setDate(nextDate.getDate() + 1);
+
+      const dayRevenue = await Order.aggregate([
+        {
+          $match: {
+            createdAt: { $gte: date, $lt: nextDate },
+            status: "DELIVERED",
+          },
+        },
+        { $group: { _id: null, total: { $sum: "$totalAmount" } } },
+      ]);
+
+      revenues.push({
+        date: date.toISOString().split("T")[0],
+        revenue: dayRevenue[0]?.total || 0,
+      });
+    }
+
+    res.json(revenues);
+  } catch (error) {
+    res.status(500).json({
+      message: "Failed to fetch food revenue analytics",
+      error: error.message,
+    });
+  }
+};
+
+// GET SUBSCRIPTION REVENUE ANALYTICS
+exports.getSubscriptionRevenueAnalytics = async (req, res) => {
+  try {
+    const Subscription = require("../models/Subscription");
+    const days = 7;
+    const revenues = [];
+
+    for (let i = days - 1; i >= 0; i--) {
+      const date = new Date();
+      date.setDate(date.getDate() - i);
+      date.setHours(0, 0, 0, 0);
+
+      const nextDate = new Date(date);
+      nextDate.setDate(nextDate.getDate() + 1);
+
+      const dayRevenue = await Subscription.aggregate([
+        {
+          $match: {
+            createdAt: { $gte: date, $lt: nextDate },
+            status: "active",
+          },
+        },
+        { $group: { _id: null, total: { $sum: "$price" } } },
+      ]);
+
+      revenues.push({
+        date: date.toISOString().split("T")[0],
+        revenue: dayRevenue[0]?.total || 0,
+      });
+    }
+
+    res.json(revenues);
+  } catch (error) {
+    res.status(500).json({
+      message: "Failed to fetch subscription revenue analytics",
+      error: error.message,
+    });
+  }
+};
+
+// GET REVENUE BY RESTAURANT
+exports.getRevenueByRestaurant = async (req, res) => {
+  try {
+    const Subscription = require("../models/Subscription");
+
+    // Get food revenue by restaurant
+    const foodRevenue = await Order.aggregate([
+      {
+        $match: { status: "DELIVERED" },
+      },
+      {
+        $group: {
+          _id: "$restaurantId",
+          total: { $sum: "$totalAmount" },
+          count: { $sum: 1 },
+        },
+      },
+      {
+        $lookup: {
+          from: "restaurants",
+          localField: "_id",
+          foreignField: "_id",
+          as: "restaurant",
+        },
+      },
+      {
+        $unwind: "$restaurant",
+      },
+      {
+        $project: {
+          restaurantId: "$_id",
+          restaurantName: "$restaurant.title",
+          foodRevenue: "$total",
+          orderCount: "$count",
+          _id: 0,
+        },
+      },
+      {
+        $sort: { foodRevenue: -1 },
+      },
+    ]);
+
+    // Get subscription revenue by restaurant
+    const subscriptionRevenue = await Subscription.aggregate([
+      {
+        $match: { status: "active" },
+      },
+      {
+        $group: {
+          _id: "$restaurantId",
+          total: { $sum: "$price" },
+          count: { $sum: 1 },
+        },
+      },
+      {
+        $lookup: {
+          from: "restaurants",
+          localField: "_id",
+          foreignField: "_id",
+          as: "restaurant",
+        },
+      },
+      {
+        $unwind: "$restaurant",
+      },
+      {
+        $project: {
+          restaurantId: "$_id",
+          restaurantName: "$restaurant.title",
+          subscriptionRevenue: "$total",
+          subscriptionCount: "$count",
+          _id: 0,
+        },
+      },
+      {
+        $sort: { subscriptionRevenue: -1 },
+      },
+    ]);
+
+    // Merge both revenues
+    const merged = [];
+    const restaurantMap = new Map();
+
+    foodRevenue.forEach((item) => {
+      restaurantMap.set(item.restaurantId.toString(), {
+        restaurantId: item.restaurantId,
+        restaurantName: item.restaurantName,
+        foodRevenue: item.foodRevenue,
+        orderCount: item.orderCount,
+        subscriptionRevenue: 0,
+        subscriptionCount: 0,
+      });
+    });
+
+    subscriptionRevenue.forEach((item) => {
+      const key = item.restaurantId.toString();
+      if (restaurantMap.has(key)) {
+        const existing = restaurantMap.get(key);
+        existing.subscriptionRevenue = item.subscriptionRevenue;
+        existing.subscriptionCount = item.subscriptionCount;
+      } else {
+        restaurantMap.set(key, {
+          restaurantId: item.restaurantId,
+          restaurantName: item.restaurantName,
+          foodRevenue: 0,
+          orderCount: 0,
+          subscriptionRevenue: item.subscriptionRevenue,
+          subscriptionCount: item.subscriptionCount,
+        });
+      }
+    });
+
+    const result = Array.from(restaurantMap.values())
+      .map((item) => ({
+        ...item,
+        totalRevenue: item.foodRevenue + item.subscriptionRevenue,
+      }))
+      .sort((a, b) => b.totalRevenue - a.totalRevenue);
+
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({
+      message: "Failed to fetch revenue by restaurant",
+      error: error.message,
+    });
+  }
+};
+
+// GET REVENUE STATISTICS
+exports.getRevenueStats = async (req, res) => {
+  try {
+    const Subscription = require("../models/Subscription");
+
+    // Total food revenue
+    const foodRevenueData = await Order.aggregate([
+      {
+        $match: { status: "DELIVERED" },
+      },
+      {
+        $group: { _id: null, total: { $sum: "$totalAmount" } },
+      },
+    ]);
+
+    // Total subscription revenue
+    const subscriptionRevenueData = await Subscription.aggregate([
+      {
+        $match: { status: "active" },
+      },
+      {
+        $group: { _id: null, total: { $sum: "$price" } },
+      },
+    ]);
+
+    const foodRevenue = foodRevenueData[0]?.total || 0;
+    const subscriptionRevenue = subscriptionRevenueData[0]?.total || 0;
+
+    res.json({
+      foodRevenue,
+      subscriptionRevenue,
+      totalRevenue: foodRevenue + subscriptionRevenue,
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: "Failed to fetch revenue statistics",
+      error: error.message,
+    });
   }
 };

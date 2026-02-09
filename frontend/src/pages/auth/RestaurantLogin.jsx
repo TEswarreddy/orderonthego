@@ -21,20 +21,21 @@ const RestaurantLogin = () => {
     try {
       const res = await axios.post("/auth/login", form);
       
-      // Only allow RESTAURANT, STAFF, and ADMIN on this login page
+      // Only allow RESTAURANT and STAFF on this login page
       if (res.data.userType === "USER") {
         alert("Please use the customer login for customer accounts");
         setLoading(false);
         return;
       }
 
-      login(res.data);
-      
       if (res.data.userType === "ADMIN") {
-        navigate("/admin");
-      } else if (res.data.userType === "RESTAURANT" || res.data.userType === "STAFF") {
-        navigate("/restaurant");
+        alert("Admin access is restricted. Please contact system administrator.");
+        setLoading(false);
+        return;
       }
+
+      login(res.data);
+      navigate("/restaurant");
     } catch (err) {
       alert(err.response?.data?.message || "Login failed");
     } finally {

@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Login from "./pages/auth/Login";
 import UserLogin from "./pages/auth/UserLogin";
 import RestaurantLogin from "./pages/auth/RestaurantLogin";
+import AdminLogin from "./pages/auth/AdminLogin";
 import Register from "./pages/auth/Register";
 import UserRegister from "./pages/auth/UserRegister";
 import RestaurantRegister from "./pages/auth/RestaurantRegister";
@@ -37,6 +38,7 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/login/user" element={<UserLogin />} />
           <Route path="/login/restaurant" element={<RestaurantLogin />} />
+          <Route path="/admin-access" element={<AdminLogin />} />
           <Route path="/register" element={<Register />} />
           <Route path="/register/user" element={<UserRegister />} />
           <Route path="/register/restaurant" element={<RestaurantRegister />} />

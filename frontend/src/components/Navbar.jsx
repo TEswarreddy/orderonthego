@@ -78,7 +78,12 @@ const Navbar = () => {
 
           {user && (
             <div className="flex items-center gap-3">
-              <span className="text-sm text-yellow-200">👤 {user.name || "User"}</span>
+              <Link
+                to="/profile"
+                className="text-sm text-yellow-200 hover:text-white transition-colors duration-200 font-medium px-3 py-2 rounded-lg hover:bg-white hover:bg-opacity-10"
+              >
+                👤 {user.username || user.name || "Profile"}
+              </Link>
               <button
                 onClick={logout}
                 className="flex items-center gap-2 bg-white text-red-600 px-4 py-2 rounded-lg hover:bg-yellow-200 transition-all duration-200 font-semibold shadow-md hover:shadow-lg"
@@ -166,7 +171,13 @@ const Navbar = () => {
 
           {user && (
             <div className="flex flex-col gap-2">
-              <span className="text-sm text-yellow-200 px-3 py-2">👤 {user.name || "User"}</span>
+              <Link
+                to="/profile"
+                className="text-sm text-yellow-200 hover:text-white transition-colors duration-200 font-medium px-3 py-2 rounded-lg hover:bg-white hover:bg-opacity-10 text-left"
+                onClick={() => setIsOpen(false)}
+              >
+                👤 {user.username || user.name || "Profile"}
+              </Link>
               <button
                 onClick={() => {
                   logout();

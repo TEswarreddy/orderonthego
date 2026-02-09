@@ -11,6 +11,7 @@ import FoodDetail from "./pages/user/FoodDetail";
 import Cart from "./pages/user/Cart";
 import Orders from "./pages/user/Orders";
 import Payment from "./pages/user/Payment";
+import Profile from "./pages/user/Profile";
 import AdminDashboard from "./pages/admin/Dashboard";
 import RestaurantDashboard from "./pages/restaurant/Dashboard";
 import SubscriptionPlans from "./pages/restaurant/SubscriptionPlans";
@@ -62,6 +63,15 @@ function App() {
             element={
               <ProtectedRoute role="USER">
                 <Orders />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/profile"
+            element={
+              <ProtectedRoute role={["USER", "RESTAURANT", "STAFF", "ADMIN"]}>
+                <Profile />
               </ProtectedRoute>
             }
           />

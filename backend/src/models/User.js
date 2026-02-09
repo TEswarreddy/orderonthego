@@ -7,6 +7,9 @@ const userSchema = new mongoose.Schema(
     password: { type: String, required: true },
     phone: { type: String },
     address: { type: String },
+    profileImage: { type: String }, // URL or path to the profile image
+    profileImageBuffer: { type: Buffer }, // Binary data for the image
+    profileImageMimeType: { type: String }, // MIME type (e.g., image/jpeg)
     emailVerified: { type: Boolean, default: false },
     phoneVerified: { type: Boolean, default: false },
     emailVerificationToken: { type: String },

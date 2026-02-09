@@ -3,6 +3,7 @@ const Restaurant = require("../models/Restaurant");
 const bcrypt = require("bcryptjs");
 const generateToken = require("../utils/generateToken");
 const sgMail = require("@sendgrid/mail");
+const { getImageData } = require("../utils/uploadHandler");
 
 sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
@@ -152,4 +153,134 @@ exports.login = async (req, res) => {
     phoneVerified: user.phoneVerified,
     token: generateToken(user),
   });
+};
+
+// GET USER PROFILE
+exports.getUserProfile = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const user = await User.findById(userId).select("-password");
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    res.json({
+      _id: user._id,
+      username: user.username,
+      email: user.email,
+      phone: user.phone,
+      address: user.address,
+      profileImage: getImageData(user),
+      userType: user.userType,
+      staffRole: user.staffRole,
+      restaurantId: user.restaurantId,
+      emailVerified: user.emailVerified,
+      phoneVerified: user.phoneVerified,
+      status: user.status,
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt,
+    });
+  } catch (error) {
+    res.status(500).json({ message: "Error fetching profile", error: error.message });
+  }
+};
+
+// UPDATE USER PROFILE
+exports.updateUserProfile = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const { username, phone, address } = req.body;
+
+    const user = await User.findByIdAndUpdate(
+      userId,
+      { username, phone, address },
+      { new: true }
+    ).select("-password");
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    res.json({
+      message: "Profile updated successfully",
+      user: {
+        _id: user._id,
+        username: user.username,
+        email: user.email,
+        phone: user.phone,
+        address: user.address,
+        profileImage: getImageData(user),
+        userType: user.userType,
+        emailVerified: user.emailVerified,
+        phoneVerified: user.phoneVerified,
+      },
+    });
+  } catch (error) {
+    res.status(500).json({ message: "Error updating profile", error: error.message });
+  }
+};
+
+// UPLOAD PROFILE IMAGE
+exports.uploadProfileImage = async (req, res) => {
+  try {
+    const userId = req.user._id;
+
+    if (!req.file) {
+      return res.status(400).json({ message: "No image file provided" });
+    }
+
+    // Validate file type
+    const allowedMimes = ["image/jpeg", "image/png", "image/gif", "image/webp"];
+    if (!allowedMimes.includes(req.file.mimetype)) {
+      return res.status(400).json({ message: "Invalid file type. Only images are allowed" });
+    }
+
+    // Validate file size (max 5MB)
+    const maxSize = 5 * 1024 * 1024;
+    if (req.file.size > maxSize) {
+      return res.status(400).json({ message: "File size must be less than 5MB" });
+    }
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Store image as buffer in MongoDB
+    user.profileImageBuffer = req.file.buffer;
+    user.profileImageMimeType = req.file.mimetype;
+    user.profileImage = `profile_${userId}_${Date.now()}`;
+
+    await user.save();
+
+    res.json({
+      message: "Profile image uploaded successfully",
+      profileImage: getImageData(user),
+    });
+  } catch (error) {
+    res.status(500).json({ message: "Error uploading image", error: error.message });
+  }
+};
+
+// DELETE PROFILE IMAGE
+exports.deleteProfileImage = async (req, res) => {
+  try {
+    const userId = req.user._id;
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    user.profileImage = null;
+    user.profileImageBuffer = null;
+    user.profileImageMimeType = null;
+
+    await user.save();
+
+    res.json({ message: "Profile image deleted successfully" });
+  } catch (error) {
+    res.status(500).json({ message: "Error deleting image", error: error.message });
+  }
 };

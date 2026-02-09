@@ -1,8 +1,25 @@
 import { useState, useEffect, useContext } from "react";
 import axios from "../../api/axios";
 import { AuthContext } from "../../context/AuthContext";
-import { Plus, Edit2, Trash2, TrendingUp, Clock, CheckCircle, Star, Crown, ArrowUpRight, AlertCircle } from "lucide-react";
+import {
+  Plus,
+  Edit2,
+  Trash2,
+  TrendingUp,
+  Clock,
+  CheckCircle,
+  Star,
+  Crown,
+  ArrowUpRight,
+  AlertCircle,
+  Menu,
+  LayoutGrid,
+  ClipboardList,
+  Users,
+  Settings,
+} from "lucide-react";
 import { Link } from "react-router-dom";
+import RestaurantSidebar from "./components/RestaurantSidebar";
 
 const RestaurantDashboard = () => {
   const { user } = useContext(AuthContext);
@@ -16,6 +33,7 @@ const RestaurantDashboard = () => {
   });
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("items");
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [showAddForm, setShowAddForm] = useState(false);
   const [subscriptionUsage, setSubscriptionUsage] = useState(null);
   const [availablePlans, setAvailablePlans] = useState([]);
@@ -89,10 +107,8 @@ const RestaurantDashboard = () => {
   const fetchRestaurantData = async () => {
     try {
       setLoading(true);
-      const restaurantId = user?.userType === "STAFF" ? user.restaurantId : user?._id;
-      const foodsRes = restaurantId
-        ? await axios.get(`/foods/restaurant/${restaurantId}`)
-        : await axios.get("/foods");
+      // Use /my-foods endpoint - fetches foods for logged-in restaurant
+      const foodsRes = await axios.get("/foods/my-foods");
       setFoods(foodsRes.data || []);
 
       const ordersRes = await axios.get("/orders/restaurant");
@@ -370,11 +386,56 @@ const RestaurantDashboard = () => {
     return <div className="p-6 text-center text-gray-600">Loading restaurant data...</div>;
   }
 
+  const navItems = user?.userType === "RESTAURANT"
+    ? [
+        { id: "items", label: "Menu Items", icon: LayoutGrid },
+        { id: "orders", label: "Orders", icon: ClipboardList },
+        { id: "subscription", label: "Subscription", icon: Crown },
+        { id: "staff", label: "Staff", icon: Users },
+        { id: "settings", label: "Settings", icon: Settings },
+      ]
+    : [
+        { id: "orders", label: "Orders", icon: ClipboardList },
+        { id: "items", label: "Menu Items", icon: LayoutGrid },
+      ];
+
+  const handleNavigate = (tabId, closeMobile) => {
+    setActiveTab(tabId);
+    if (closeMobile) {
+      setSidebarOpen(false);
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-gray-50 py-8 px-4">
-      <div className="max-w-7xl mx-auto">
-        <h1 className="text-4xl font-bold text-gray-900 mb-2">Restaurant Dashboard</h1>
-        <p className="text-gray-600 mb-8">Manage your menu and orders</p>
+    <div className="min-h-screen bg-gray-50">
+      <div className="flex">
+        <RestaurantSidebar
+          activeTab={activeTab}
+          navItems={navItems}
+          onNavigate={handleNavigate}
+          sidebarOpen={sidebarOpen}
+          setSidebarOpen={setSidebarOpen}
+        />
+        <div className="flex-1 min-w-0">
+          <div className="sticky top-0 z-20 bg-gray-50/95 backdrop-blur border-b border-gray-200 md:hidden">
+            <div className="flex items-center justify-between px-4 py-3">
+              <div>
+                <p className="text-xs text-gray-500">Restaurant</p>
+                <p className="text-base font-semibold text-gray-900">Dashboard</p>
+              </div>
+              <button
+                onClick={() => setSidebarOpen(true)}
+                className="p-2 rounded-lg hover:bg-gray-100"
+              >
+                <Menu size={20} className="text-gray-600" />
+              </button>
+            </div>
+          </div>
+
+          <div className="py-8 px-4">
+            <div className="max-w-7xl mx-auto">
+              <h1 className="text-4xl font-bold text-gray-900 mb-2">Restaurant Dashboard</h1>
+              <p className="text-gray-600 mb-8">Manage your menu and orders</p>
 
         {/* Subscription Card */}
         {subscriptionUsage && (
@@ -491,7 +552,7 @@ const RestaurantDashboard = () => {
         </div>
 
         {/* Tabs */}
-        <div className="flex gap-4 mb-6 border-b overflow-x-auto">
+        <div className="flex gap-4 mb-6 border-b overflow-x-auto md:hidden">
           {(user?.userType === "RESTAURANT"
             ? ["items", "orders", "subscription", "staff", "settings"]
             : ["orders", "items"]
@@ -1416,6 +1477,9 @@ const RestaurantDashboard = () => {
           </div>
         )}
             </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };

@@ -5,6 +5,7 @@ const {
   getAllFoods,
   getFoodById,
   getFoodsByRestaurant,
+  getOwnFoods,
   updateFood,
   deleteFood,
   updateAvailability,
@@ -13,7 +14,8 @@ const {
 const { protect, authorize } = require("../middlewares/authMiddleware");
 const { checkMenuItemLimit } = require("../middlewares/subscriptionMiddleware");
 
-router.post("/", protect, authorize("RESTAURANT"), checkMenuItemLimit, addFood);
+router.post("/", protect, authorize("RESTAURANT", "STAFF"), checkMenuItemLimit, addFood);
+router.get("/my-foods", protect, authorize("RESTAURANT", "STAFF"), getOwnFoods);
 router.get("/", getAllFoods);
 router.get("/restaurant/:id", getFoodsByRestaurant);
 router.get("/:id", getFoodById);

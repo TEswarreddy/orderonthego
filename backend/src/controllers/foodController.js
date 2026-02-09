@@ -4,6 +4,32 @@ const Restaurant = require("../models/Restaurant");
 const resolveRestaurantId = (user) =>
   user.userType === "STAFF" ? user.restaurantId : user._id;
 
+// Get logged-in restaurant owner's foods
+exports.getOwnFoods = async (req, res) => {
+  try {
+    let restaurantId;
+
+    if (req.user.userType === "STAFF") {
+      restaurantId = req.user.restaurantId;
+    } else if (req.user.userType === "RESTAURANT") {
+      // Find the restaurant document where this user is the owner
+      const restaurant = await Restaurant.findOne({ ownerId: req.user._id });
+      if (!restaurant) {
+        return res.status(404).json({ message: "Restaurant not found" });
+      }
+      restaurantId = restaurant._id;
+    } else {
+      return res.status(403).json({ message: "Not authorized" });
+    }
+
+    const foods = await Food.find({ restaurantId }).populate("restaurantId", "title");
+    res.json(foods);
+  } catch (error) {
+    console.error("Get own foods error:", error);
+    res.status(500).json({ message: "Failed to fetch foods", error: error.message });
+  }
+};
+
 
 // Add food item (Restaurant only)
 exports.addFood = async (req, res) => {
@@ -25,8 +51,20 @@ exports.addFood = async (req, res) => {
       });
     }
 
+    // Get the restaurant ID for this owner
+    let restaurantId;
+    if (req.user.userType === "RESTAURANT") {
+      const restaurant = await Restaurant.findOne({ ownerId: req.user._id });
+      if (!restaurant) {
+        return res.status(404).json({ message: "Restaurant not found" });
+      }
+      restaurantId = restaurant._id;
+    } else if (req.user.userType === "STAFF") {
+      restaurantId = req.user.restaurantId;
+    }
+
     const food = await Food.create({
-      restaurantId: req.user._id,
+      restaurantId,
       title,
       price: Number(price),
       description,
@@ -79,8 +117,9 @@ exports.updateFood = async (req, res) => {
       return res.status(404).json({ message: "Food not found" });
     }
 
-    // Verify ownership
-    if (food.restaurantId.toString() !== req.user._id.toString()) {
+    // Verify ownership - check if user owns the restaurant
+    const restaurant = await Restaurant.findById(food.restaurantId);
+    if (!restaurant || restaurant.ownerId.toString() !== req.user._id.toString()) {
       return res.status(403).json({ message: "Not authorized to update this food" });
     }
 
@@ -107,8 +146,9 @@ exports.deleteFood = async (req, res) => {
       return res.status(404).json({ message: "Food not found" });
     }
 
-    // Verify ownership
-    if (food.restaurantId.toString() !== req.user._id.toString()) {
+    // Verify ownership - check if user owns the restaurant
+    const restaurant = await Restaurant.findById(food.restaurantId);
+    if (!restaurant || restaurant.ownerId.toString() !== req.user._id.toString()) {
       return res.status(403).json({ message: "Not authorized to delete this food" });
     }
 
@@ -130,8 +170,19 @@ exports.updateAvailability = async (req, res) => {
       return res.status(404).json({ message: "Food not found" });
     }
 
-    const restaurantId = resolveRestaurantId(req.user);
-    if (!restaurantId || food.restaurantId.toString() !== restaurantId.toString()) {
+    // Verify ownership
+    const restaurant = await Restaurant.findById(food.restaurantId);
+    
+    let isOwner = false;
+    if (req.user.userType === "STAFF") {
+      // Staff member belongs to the restaurant
+      isOwner = restaurant._id.toString() === req.user.restaurantId.toString();
+    } else if (req.user.userType === "RESTAURANT") {
+      // Restaurant owner
+      isOwner = restaurant.ownerId.toString() === req.user._id.toString();
+    }
+    
+    if (!isOwner) {
       return res.status(403).json({ message: "Not authorized to update this food" });
     }
 

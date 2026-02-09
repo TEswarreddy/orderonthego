@@ -1,6 +1,10 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Login from "./pages/auth/Login";
+import UserLogin from "./pages/auth/UserLogin";
+import RestaurantLogin from "./pages/auth/RestaurantLogin";
 import Register from "./pages/auth/Register";
+import UserRegister from "./pages/auth/UserRegister";
+import RestaurantRegister from "./pages/auth/RestaurantRegister";
 import Home from "./pages/user/Home";
 import FoodDetail from "./pages/user/FoodDetail";
 import Cart from "./pages/user/Cart";
@@ -31,7 +35,11 @@ function App() {
           <Route path="/" element={<Home />} />
           <Route path="/food/:foodId" element={<FoodDetail />} />
           <Route path="/login" element={<Login />} />
+          <Route path="/login/user" element={<UserLogin />} />
+          <Route path="/login/restaurant" element={<RestaurantLogin />} />
           <Route path="/register" element={<Register />} />
+          <Route path="/register/user" element={<UserRegister />} />
+          <Route path="/register/restaurant" element={<RestaurantRegister />} />
           <Route path="/about" element={<About />} />
           <Route path="/help" element={<HelpCenter />} />
           <Route path="/terms" element={<TermsOfService />} />

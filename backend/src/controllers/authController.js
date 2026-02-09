@@ -1,10 +1,11 @@
 const User = require("../models/User");
+const Restaurant = require("../models/Restaurant");
 const bcrypt = require("bcryptjs");
 const generateToken = require("../utils/generateToken");
 
 // REGISTER
 exports.register = async (req, res) => {
-  const { username, email, password, userType } = req.body;
+  const { username, email, password, userType, phone, address, restaurantName, restaurantAddress, cuisineType, description } = req.body;
 
   if (userType === "STAFF") {
     return res.status(403).json({ message: "Staff accounts must be created via invitation" });
@@ -23,8 +24,22 @@ exports.register = async (req, res) => {
     email,
     password: hashedPassword,
     userType,
+    phone,
+    address,
     approval: userType === "RESTAURANT" ? false : true,
   });
+
+  // If restaurant, create the restaurant document as well
+  if (userType === "RESTAURANT") {
+    await Restaurant.create({
+      ownerId: user._id,
+      title: restaurantName,
+      address: restaurantAddress,
+      phone,
+      cuisineType,
+      description,
+    });
+  }
 
   res.status(201).json({
     _id: user._id,

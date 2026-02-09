@@ -188,5 +188,6 @@ const OverviewTab = ({
     </div>
   </div>
   );
+};
 
 export default OverviewTab;

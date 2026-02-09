@@ -1,6 +1,7 @@
 const User = require("../models/User");
 const Order = require("../models/Order");
 const Restaurant = require("../models/Restaurant");
+const Food = require("../models/Food");
 
 // GET DASHBOARD STATISTICS
 exports.getDashboardStats = async (req, res) => {
@@ -276,6 +277,107 @@ exports.deleteOrder = async (req, res) => {
     res
       .status(500)
       .json({ message: "Failed to delete order", error: error.message });
+  }
+};
+
+// GET STAFF BY RESTAURANT (ADMIN)
+exports.getRestaurantStaff = async (req, res) => {
+  try {
+    const staff = await User.find({
+      restaurantId: req.params.id,
+      userType: "STAFF",
+    }).select("username email staffRole status approval createdAt");
+
+    res.json(staff);
+  } catch (error) {
+    res.status(500).json({
+      message: "Failed to fetch restaurant staff",
+      error: error.message,
+    });
+  }
+};
+
+// GET ALL FOODS (ADMIN)
+exports.getAllFoodsAdmin = async (req, res) => {
+  try {
+    const foods = await Food.find().populate("restaurantId", "title");
+    res.json(foods);
+  } catch (error) {
+    res.status(500).json({ message: "Failed to fetch foods", error: error.message });
+  }
+};
+
+// CREATE FOOD (ADMIN)
+exports.createFoodAdmin = async (req, res) => {
+  try {
+    const {
+      restaurantId,
+      title,
+      price,
+      description,
+      category,
+      menuType,
+      mainImg,
+      discount,
+      isAvailable,
+    } = req.body;
+
+    if (!restaurantId || !title || price === undefined) {
+      return res.status(400).json({ message: "Restaurant, title, and price are required" });
+    }
+
+    const food = await Food.create({
+      restaurantId,
+      title,
+      price: Number(price),
+      description,
+      category,
+      menuType,
+      mainImg,
+      discount: discount !== undefined ? Number(discount) : 0,
+      isAvailable: isAvailable !== undefined ? Boolean(isAvailable) : true,
+    });
+
+    await food.populate("restaurantId", "title");
+    res.status(201).json(food);
+  } catch (error) {
+    res.status(500).json({ message: "Failed to create food", error: error.message });
+  }
+};
+
+// UPDATE FOOD (ADMIN)
+exports.updateFoodAdmin = async (req, res) => {
+  try {
+    const updates = { ...req.body };
+    if (updates.price !== undefined) updates.price = Number(updates.price);
+    if (updates.discount !== undefined) updates.discount = Number(updates.discount);
+    if (updates.isAvailable !== undefined) updates.isAvailable = Boolean(updates.isAvailable);
+
+    const food = await Food.findByIdAndUpdate(req.params.id, updates, {
+      new: true,
+    }).populate("restaurantId", "title");
+
+    if (!food) {
+      return res.status(404).json({ message: "Food not found" });
+    }
+
+    res.json(food);
+  } catch (error) {
+    res.status(500).json({ message: "Failed to update food", error: error.message });
+  }
+};
+
+// DELETE FOOD (ADMIN)
+exports.deleteFoodAdmin = async (req, res) => {
+  try {
+    const food = await Food.findByIdAndDelete(req.params.id);
+    if (!food) {
+      return res.status(404).json({ message: "Food not found" });
+    }
+
+    res.json({ message: "Food item deleted successfully" });
+  } catch (error) {
+    res.status(500).json({ message: "Failed to delete food", error: error.message });
   }
 };
 

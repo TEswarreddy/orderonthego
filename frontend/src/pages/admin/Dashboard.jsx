@@ -5,12 +5,6 @@ import {
   ShoppingBag,
   TrendingUp,
   AlertCircle,
-  Edit2,
-  Trash2,
-  Eye,
-  Search,
-  Download,
-  X,
   CheckCircle,
   Clock,
   Store,
@@ -19,179 +13,17 @@ import {
   Phone,
   Home,
   BarChart3,
+  Utensils,
 } from "lucide-react";
-
-// StatCard Component
-const StatCard = ({ icon: Icon, title, value, color, subtext }) => (
-  <div className={`bg-gradient-to-br ${color} text-white rounded-2xl shadow-lg p-6 transition hover:-translate-y-1 hover:shadow-xl`}>
-    <div className="flex items-center justify-between">
-      <div>
-        <p className="text-sm opacity-90 mb-1">{title}</p>
-        <p className="text-3xl font-bold">{value}</p>
-        {subtext && <p className="text-xs opacity-75 mt-1">{subtext}</p>}
-      </div>
-      <Icon size={40} className="opacity-50" />
-    </div>
-  </div>
-);
-
-// Chart Component (Simple Bar Chart)
-const SimpleChart = ({ data, title }) => {
-  const maxValue = Math.max(...data.map((d) => d.value));
-
-  return (
-    <div className="bg-white rounded-2xl shadow-lg p-6 mb-6">
-      <h3 className="text-xl font-bold text-gray-900 mb-6">{title}</h3>
-      <div className="flex items-end gap-4 h-64">
-        {data.map((item, idx) => (
-          <div key={idx} className="flex-1 flex flex-col items-center">
-            <div className="relative w-full flex items-end h-full group">
-              <div
-                className="w-full bg-gradient-to-t from-orange-500 to-orange-400 rounded-t-lg transition hover:shadow-lg hover:from-orange-600 hover:to-orange-500 cursor-pointer"
-                style={{ height: `${(item.value / maxValue) * 100}%`, minHeight: "20px" }}
-                title={`${item.label}: ${item.value}`}
-              />
-            </div>
-            <p className="text-xs font-semibold text-gray-700 mt-3 text-center">
-              {item.label}
-            </p>
-            <p className="text-sm font-bold text-orange-600">{item.value}</p>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-};
-
-// Table Component
-const DataTable = ({
-  columns,
-  data,
-  onEdit,
-  onDelete,
-  onView,
-  maxRows = 10,
-  loading = false,
-}) => {
-  const displayed = data.slice(0, maxRows);
-
-  return (
-    <div className="overflow-x-auto">
-      <table className="w-full text-sm">
-        <thead className="bg-gradient-to-r from-gray-50 to-blue-50 border-b-2 border-gray-200">
-          <tr>
-            {columns.map((col) => (
-              <th
-                key={col}
-                className="text-left py-4 px-6 font-semibold text-gray-800"
-              >
-                {col}
-              </th>
-            ))}
-            <th className="text-left py-4 px-6 font-semibold text-gray-800">
-              Actions
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          {displayed.length > 0 ? (
-            displayed.map((row) => (
-              <tr
-                key={row._id || row.id}
-                className="border-b hover:bg-orange-50 transition"
-              >
-                {columns.map((col) => (
-                  <td key={col} className="py-4 px-6 text-gray-700">
-                    {col === "Amount" || col === "Revenue"
-                      ? `₹${(row[col.toLowerCase()] ?? 0).toFixed(2)}`
-                      : col === "Status"
-                      ? (
-                          <span
-                            className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                              row.status === "active" ||
-                              row.status === "DELIVERED" ||
-                              row.status === "approved"
-                                ? "bg-green-100 text-green-800"
-                                : row.status === "PLACED" ||
-                                  row.status === "pending"
-                                ? "bg-yellow-100 text-yellow-800"
-                                : row.status === "PREPARING" ||
-                                  row.status === "inactive"
-                                ? "bg-blue-100 text-blue-800"
-                                : "bg-red-100 text-red-800"
-                            }`}
-                          >
-                            {String(row.status || "N/A").replace(/_/g, " ")}
-                          </span>
-                        )
-                      : String(row[col.toLowerCase()] || "N/A")}
-                  </td>
-                ))}
-                <td className="py-4 px-6 flex gap-2">
-                  {onView && (
-                    <button
-                      onClick={() => onView(row)}
-                      className="p-2 hover:bg-gray-200 rounded-lg transition"
-                      title="View"
-                    >
-                      <Eye size={18} className="text-gray-600" />
-                    </button>
-                  )}
-                  {onEdit && (
-                    <button
-                      onClick={() => onEdit(row)}
-                      className="p-2 hover:bg-blue-100 rounded-lg transition"
-                      title="Edit"
-                    >
-                      <Edit2 size={18} className="text-blue-600" />
-                    </button>
-                  )}
-                  {onDelete && (
-                    <button
-                      onClick={() => onDelete(row)}
-                      className="p-2 hover:bg-red-100 rounded-lg transition"
-                      title="Delete"
-                    >
-                      <Trash2 size={18} className="text-red-600" />
-                    </button>
-                  )}
-                </td>
-              </tr>
-            ))
-          ) : (
-            <tr>
-              <td colSpan={columns.length + 1} className="py-8 text-center text-gray-500">
-                {loading ? "Loading..." : "No data found"}
-              </td>
-            </tr>
-          )}
-        </tbody>
-      </table>
-    </div>
-  );
-};
-
-// Modal Component
-const Modal = ({ title, isOpen, onClose, children, isWide = false }) => {
-  if (!isOpen) return null;
-
-  return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-      <div className={`bg-white rounded-2xl shadow-2xl p-8 w-full ${isWide ? "max-w-4xl" : "max-w-md"} max-h-[90vh] overflow-y-auto`}>
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-bold text-gray-900">{title}</h2>
-          <button
-            onClick={onClose}
-            className="p-1 hover:bg-gray-100 rounded-lg transition"
-          >
-            <X size={24} className="text-gray-500" />
-          </button>
-        </div>
-        {children}
-      </div>
-    </div>
-  );
-};
+import StatCard from "./components/StatCard";
+import Modal from "./components/Modal";
+import AdminSidebar from "./components/AdminSidebar";
+import OverviewTab from "./components/OverviewTab";
+import OrdersTab from "./components/OrdersTab";
+import UsersTab from "./components/UsersTab";
+import RestaurantsTab from "./components/RestaurantsTab";
+import AnalyticsTab from "./components/AnalyticsTab";
+import FoodsTab from "./components/FoodsTab";
 
 // Main Dashboard Component
 const AdminDashboard = () => {
@@ -204,13 +36,31 @@ const AdminDashboard = () => {
   const [revenueData, setRevenueData] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
+  const [foodAvailability, setFoodAvailability] = useState("all");
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [restaurantFoods, setRestaurantFoods] = useState([]);
+  const [restaurantStaff, setRestaurantStaff] = useState([]);
+  const [restaurantDetailsLoading, setRestaurantDetailsLoading] = useState(false);
+  const [foods, setFoods] = useState([]);
+  const defaultFoodForm = {
+    restaurantId: "",
+    title: "",
+    price: "",
+    category: "",
+    menuType: "",
+    description: "",
+    mainImg: "",
+    discount: "",
+    isAvailable: true,
+  };
+  const [foodForm, setFoodForm] = useState(defaultFoodForm);
 
   // Modal states
   const [modals, setModals] = useState({
     order: false,
     user: false,
     restaurant: false,
+    food: false,
   });
   const [selectedItem, setSelectedItem] = useState(null);
   const [editForm, setEditForm] = useState({});
@@ -220,16 +70,18 @@ const AdminDashboard = () => {
     const fetchDashboardData = async () => {
       try {
         setLoading(true);
-        const [statsRes, ordersRes, usersRes, revenueRes] = await Promise.all([
+        const [statsRes, ordersRes, usersRes, revenueRes, foodsRes] = await Promise.all([
           axios.get("/admin/stats"),
           axios.get("/admin/orders"),
           axios.get("/admin/users"),
           axios.get("/admin/analytics/revenue"),
+          axios.get("/admin/foods"),
         ]);
 
         setStats(statsRes.data);
         setOrders(ordersRes.data.orders || []);
         setUsers(usersRes.data.users || []);
+        setFoods(foodsRes.data || []);
         setRevenueData(
           revenueRes.data.map((item) => ({
             label: new Date(item.date).toLocaleDateString("en-US", {
@@ -257,16 +109,57 @@ const AdminDashboard = () => {
     fetchDashboardData();
   }, []);
 
+  const fetchRestaurantDetails = async (restaurantId) => {
+    try {
+      setRestaurantDetailsLoading(true);
+      const [foodsRes, staffRes] = await Promise.all([
+        axios.get(`/foods/restaurant/${restaurantId}`),
+        axios.get(`/admin/restaurants/${restaurantId}/staff`),
+      ]);
+      setRestaurantFoods(foodsRes.data || []);
+      setRestaurantStaff(staffRes.data || []);
+    } catch (error) {
+      console.error("Failed to fetch restaurant details:", error);
+      setRestaurantFoods([]);
+      setRestaurantStaff([]);
+    } finally {
+      setRestaurantDetailsLoading(false);
+    }
+  };
+
   // Handle Modal Actions
   const openModal = (type, item = null) => {
     setSelectedItem(item);
     setEditForm(item ? { ...item } : {});
     setModals({ ...modals, [type]: true });
+    if (type === "restaurant" && item?._id) {
+      fetchRestaurantDetails(item._id);
+    }
+    if (type === "food") {
+      setFoodForm(
+        item
+          ? {
+              ...defaultFoodForm,
+              ...item,
+              restaurantId: item.restaurantId?._id || item.restaurantId || "",
+              price: item.price ?? "",
+              discount: item.discount ?? "",
+            }
+          : defaultFoodForm
+      );
+    }
   };
 
   const closeModal = (type) => {
     setModals({ ...modals, [type]: false });
     setSelectedItem(null);
+    if (type === "restaurant") {
+      setRestaurantFoods([]);
+      setRestaurantStaff([]);
+    }
+    if (type === "food") {
+      setFoodForm(defaultFoodForm);
+    }
   };
 
   // Order Management
@@ -337,6 +230,51 @@ const AdminDashboard = () => {
     }
   };
 
+  const handleCreateFood = async () => {
+    try {
+      const payload = {
+        ...foodForm,
+        price: Number(foodForm.price),
+        discount: foodForm.discount === "" ? 0 : Number(foodForm.discount),
+        isAvailable: Boolean(foodForm.isAvailable),
+      };
+      const response = await axios.post("/admin/foods", payload);
+      setFoods([response.data, ...foods]);
+      closeModal("food");
+    } catch (error) {
+      alert("Failed to create food item");
+    }
+  };
+
+  const handleUpdateFood = async () => {
+    try {
+      const payload = {
+        ...foodForm,
+        price: Number(foodForm.price),
+        discount: foodForm.discount === "" ? 0 : Number(foodForm.discount),
+        isAvailable: Boolean(foodForm.isAvailable),
+      };
+      const response = await axios.put(`/admin/foods/${selectedItem._id}`, payload);
+      setFoods(foods.map((food) => (food._id === selectedItem._id ? response.data : food)));
+      closeModal("food");
+    } catch (error) {
+      alert("Failed to update food item");
+    }
+  };
+
+  const handleDeleteFood = async (foodId) => {
+    if (!window.confirm("Are you sure you want to delete this food item?")) {
+      return;
+    }
+
+    try {
+      await axios.delete(`/admin/foods/${foodId}`);
+      setFoods(foods.filter((food) => food._id !== foodId));
+    } catch (error) {
+      alert("Failed to delete food item");
+    }
+  };
+
   // Filter Functions
   const getFilteredOrders = () => {
     let filtered = orders;
@@ -383,14 +321,40 @@ const AdminDashboard = () => {
   const filteredOrders = getFilteredOrders();
   const filteredUsers = getFilteredUsers();
   const filteredRestaurants = getFilteredRestaurants();
+  const filteredFoods = foods.filter((food) => {
+    const term = searchTerm.toLowerCase();
+    const matchesSearch =
+      !searchTerm ||
+      (food.title || "").toLowerCase().includes(term) ||
+      (food.category || "").toLowerCase().includes(term) ||
+      (food.restaurantId?.title || "").toLowerCase().includes(term);
+
+    const matchesAvailability =
+      foodAvailability === "all" ||
+      (foodAvailability === "available" && food.isAvailable) ||
+      (foodAvailability === "unavailable" && !food.isAvailable);
+
+    return matchesSearch && matchesAvailability;
+  });
 
   const navItems = [
     { id: "overview", label: "Overview", icon: Home },
     { id: "orders", label: "Orders", icon: ShoppingBag },
     { id: "users", label: "Users", icon: Users },
     { id: "restaurants", label: "Restaurants", icon: Store },
+    { id: "foods", label: "Foods", icon: Utensils },
     { id: "analytics", label: "Analytics", icon: BarChart3 },
   ];
+
+  const handleNavigate = (tab, closeSidebar) => {
+    setActiveTab(tab);
+    setSearchTerm("");
+    setFilterStatus("all");
+    setFoodAvailability("all");
+    if (closeSidebar) {
+      setSidebarOpen(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -406,95 +370,13 @@ const AdminDashboard = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50">
       <div className="flex">
-        <aside className="hidden md:flex md:flex-col w-64 min-h-screen bg-white border-r border-gray-200 p-6 sticky top-0">
-          <div className="flex items-center gap-2 mb-8">
-            <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center text-white font-bold">
-              AO
-            </div>
-            <div>
-              <p className="text-sm text-gray-500">Admin</p>
-              <p className="font-bold text-gray-900">Dashboard</p>
-            </div>
-          </div>
-
-          <nav className="flex-1 space-y-2">
-            {navItems.map((item) => (
-              <button
-                key={item.id}
-                onClick={() => {
-                  setActiveTab(item.id);
-                  setSearchTerm("");
-                  setFilterStatus("all");
-                }}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-semibold transition ${
-                  activeTab === item.id
-                    ? "bg-gradient-to-r from-orange-500 to-orange-600 text-white shadow"
-                    : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
-                }`}
-              >
-                <item.icon size={18} />
-                {item.label}
-              </button>
-            ))}
-          </nav>
-
-          <div className="mt-6 rounded-2xl bg-gradient-to-br from-orange-50 to-blue-50 p-4">
-            <p className="text-xs text-gray-600">System Status</p>
-            <div className="flex items-center gap-2 mt-2">
-              <span className="h-2 w-2 rounded-full bg-green-500"></span>
-              <p className="text-sm font-semibold text-gray-800">All services operational</p>
-            </div>
-          </div>
-        </aside>
-
-        {sidebarOpen && (
-          <div className="fixed inset-0 z-40 md:hidden">
-            <div
-              className="absolute inset-0 bg-black/40"
-              onClick={() => setSidebarOpen(false)}
-            ></div>
-            <aside className="absolute left-0 top-0 bottom-0 w-64 bg-white p-6 shadow-xl">
-              <div className="flex items-center justify-between mb-8">
-                <div className="flex items-center gap-2">
-                  <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center text-white font-bold">
-                    AO
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-500">Admin</p>
-                    <p className="font-bold text-gray-900">Dashboard</p>
-                  </div>
-                </div>
-                <button
-                  onClick={() => setSidebarOpen(false)}
-                  className="p-2 rounded-lg hover:bg-gray-100"
-                >
-                  <X size={20} className="text-gray-600" />
-                </button>
-              </div>
-              <nav className="space-y-2">
-                {navItems.map((item) => (
-                  <button
-                    key={item.id}
-                    onClick={() => {
-                      setActiveTab(item.id);
-                      setSearchTerm("");
-                      setFilterStatus("all");
-                      setSidebarOpen(false);
-                    }}
-                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-semibold transition ${
-                      activeTab === item.id
-                        ? "bg-gradient-to-r from-orange-500 to-orange-600 text-white shadow"
-                        : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
-                    }`}
-                  >
-                    <item.icon size={18} />
-                    {item.label}
-                  </button>
-                ))}
-              </nav>
-            </aside>
-          </div>
-        )}
+        <AdminSidebar
+          activeTab={activeTab}
+          navItems={navItems}
+          onNavigate={handleNavigate}
+          sidebarOpen={sidebarOpen}
+          setSidebarOpen={setSidebarOpen}
+        />
 
         <main className="flex-1 py-8 px-4">
           <div className="max-w-7xl mx-auto">
@@ -558,355 +440,73 @@ const AdminDashboard = () => {
 
         {/* Overview Tab */}
         {activeTab === "overview" && (
-          <div className="space-y-6">
-            {/* Revenue Chart */}
-            {revenueData.length > 0 && (
-              <SimpleChart data={revenueData} title="7-Day Revenue Trend" />
-            )}
-
-            {/* Key Metrics */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              {[
-                {
-                  icon: TrendingUp,
-                  label: "Conversion Rate",
-                  value: `${(
-                    ((stats.totalOrders || 0) / Math.max(stats.totalUsers || 1, 1)) *
-                    100
-                  ).toFixed(1)}%`,
-                  color: "from-blue-50 to-blue-100",
-                  textColor: "text-blue-600",
-                },
-                {
-                  icon: ShoppingBag,
-                  label: "Avg Order Value",
-                  value: `₹${(stats.avgOrderValue || 0).toFixed(0)}`,
-                  color: "from-purple-50 to-purple-100",
-                  textColor: "text-purple-600",
-                },
-                {
-                  icon: Clock,
-                  label: "Pending Orders",
-                  value: stats.pendingOrders || 0,
-                  color: "from-orange-50 to-orange-100",
-                  textColor: "text-orange-600",
-                },
-                {
-                  icon: CheckCircle,
-                  label: "Delivered Today",
-                  value: stats.deliveredToday || 0,
-                  color: "from-green-50 to-green-100",
-                  textColor: "text-green-600",
-                },
-              ].map((metric, idx) => (
-                <div
-                  key={idx}
-                  className={`bg-gradient-to-br ${metric.color} rounded-2xl shadow-lg p-6`}
-                >
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-gray-600 mb-1">
-                        {metric.label}
-                      </p>
-                      <p className={`text-3xl font-bold ${metric.textColor}`}>
-                        {metric.value}
-                      </p>
-                    </div>
-                    <metric.icon size={32} className={metric.textColor} />
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {/* Recent Orders */}
-            <div className="bg-white rounded-2xl shadow-lg p-6">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-2xl font-bold text-gray-900">
-                  Recent Orders
-                </h2>
-                <button className="flex items-center gap-2 px-4 py-2 bg-orange-100 text-orange-600 rounded-lg font-semibold hover:bg-orange-200 transition">
-                  <Download size={18} />
-                  Export
-                </button>
-              </div>
-              <DataTable
-                columns={["orderid", "date", "amount", "status"]}
-                data={orders.slice(0, 5).map((o) => ({
-                  ...o,
-                  orderid: `#${o._id?.slice(-6)}`,
-                  date: new Date(o.createdAt).toLocaleDateString(),
-                  amount: o.totalAmount,
-                }))}
-                onView={(item) => openModal("order", item)}
-              />
-            </div>
-
-            {/* Quick Actions */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              {[
-                {
-                  icon: Download,
-                  title: "Generate Reports",
-                  color: "from-blue-500 to-blue-600",
-                  target: "analytics",
-                },
-                {
-                  icon: Users,
-                  title: "Manage Users",
-                  color: "from-purple-500 to-purple-600",
-                  target: "users",
-                },
-                {
-                  icon: Store,
-                  title: "Restaurants",
-                  color: "from-indigo-500 to-indigo-600",
-                  target: "restaurants",
-                },
-                {
-                  icon: BarChart3,
-                  title: "View Analytics",
-                  color: "from-orange-500 to-orange-600",
-                  target: "analytics",
-                },
-              ].map((action, idx) => (
-                <button
-                  key={idx}
-                  onClick={() => setActiveTab(action.target)}
-                  className={`bg-gradient-to-br ${action.color} text-white p-6 rounded-2xl cursor-pointer transition transform hover:-translate-y-1 hover:shadow-lg flex flex-col items-center gap-3`}
-                >
-                  <action.icon size={28} />
-                  <p className="font-semibold text-center">{action.title}</p>
-                </button>
-              ))}
-            </div>
-          </div>
+          <OverviewTab
+            stats={stats}
+            orders={orders}
+            revenueData={revenueData}
+            restaurants={restaurants}
+            setActiveTab={setActiveTab}
+            openModal={openModal}
+          />
         )}
 
         {/* Orders Tab */}
         {activeTab === "orders" && (
-          <div className="bg-white rounded-2xl shadow-lg p-6">
-            <div className="flex flex-col md:flex-row gap-4 mb-6">
-              <div className="flex-1 relative">
-                <Search
-                  size={20}
-                  className="absolute left-4 top-3 text-gray-400"
-                />
-                <input
-                  type="text"
-                  placeholder="Search by order ID..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-12 pr-4 py-2 border-2 border-gray-200 rounded-lg focus:border-orange-500 outline-none transition"
-                />
-              </div>
-              <select
-                value={filterStatus}
-                onChange={(e) => setFilterStatus(e.target.value)}
-                className="px-4 py-2 border-2 border-gray-200 rounded-lg focus:border-orange-500 outline-none transition"
-              >
-                <option value="all">All Status</option>
-                <option value="PLACED">Placed</option>
-                <option value="PREPARING">Preparing</option>
-                <option value="OUT_FOR_DELIVERY">Out for Delivery</option>
-                <option value="DELIVERED">Delivered</option>
-              </select>
-            </div>
-
-            <DataTable
-              columns={["orderid", "date", "amount", "status"]}
-              data={filteredOrders.map((o) => ({
-                ...o,
-                orderid: `#${o._id?.slice(-6)}`,
-                date: new Date(o.createdAt).toLocaleDateString(),
-                amount: o.totalAmount,
-              }))}
-              onEdit={(item) => openModal("order", item)}
-              onDelete={(item) => handleDeleteOrder(item._id)}
-            />
-          </div>
+          <OrdersTab
+            searchTerm={searchTerm}
+            setSearchTerm={setSearchTerm}
+            filterStatus={filterStatus}
+            setFilterStatus={setFilterStatus}
+            filteredOrders={filteredOrders}
+            openModal={openModal}
+            handleDeleteOrder={handleDeleteOrder}
+          />
         )}
 
         {/* Users Tab */}
         {activeTab === "users" && (
-          <div className="bg-white rounded-2xl shadow-lg p-6">
-            <div className="mb-6 relative">
-              <Search
-                size={20}
-                className="absolute left-4 top-3 text-gray-400"
-              />
-              <input
-                type="text"
-                placeholder="Search users by name or email..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-12 pr-4 py-2 border-2 border-gray-200 rounded-lg focus:border-orange-500 outline-none transition"
-              />
-            </div>
-
-            <DataTable
-              columns={["username", "email", "status", "phone"]}
-              data={filteredUsers}
-              onEdit={(item) => openModal("user", item)}
-              onDelete={(item) => handleDeleteUser(item._id)}
-            />
-          </div>
+          <UsersTab
+            searchTerm={searchTerm}
+            setSearchTerm={setSearchTerm}
+            filteredUsers={filteredUsers}
+            openModal={openModal}
+            handleDeleteUser={handleDeleteUser}
+          />
         )}
 
         {/* Restaurants Tab */}
         {activeTab === "restaurants" && (
-          <div className="bg-white rounded-2xl shadow-lg p-6">
-            <div className="flex flex-col md:flex-row gap-4 mb-6">
-              <div className="flex-1 relative">
-                <Search
-                  size={20}
-                  className="absolute left-4 top-3 text-gray-400"
-                />
-                <input
-                  type="text"
-                  placeholder="Search restaurants..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-12 pr-4 py-2 border-2 border-gray-200 rounded-lg focus:border-orange-500 outline-none transition"
-                />
-              </div>
-              <select
-                value={filterStatus}
-                onChange={(e) => setFilterStatus(e.target.value)}
-                className="px-4 py-2 border-2 border-gray-200 rounded-lg focus:border-orange-500 outline-none transition"
-              >
-                <option value="all">All Status</option>
-                <option value="pending">Pending</option>
-                <option value="approved">Approved</option>
-              </select>
-            </div>
+          <RestaurantsTab
+            searchTerm={searchTerm}
+            setSearchTerm={setSearchTerm}
+            filterStatus={filterStatus}
+            setFilterStatus={setFilterStatus}
+            filteredRestaurants={filteredRestaurants}
+            openModal={openModal}
+          />
+        )}
 
-            <DataTable
-              columns={["title", "cuisinetype", "status", "address"]}
-              data={filteredRestaurants.map((r) => ({
-                ...r,
-                cuisinetype: r.cuisineType,
-              }))}
-              onView={(item) => openModal("restaurant", item)}
-              onEdit={(item) => openModal("restaurant", item)}
-            />
-          </div>
+        {/* Foods Tab */}
+        {activeTab === "foods" && (
+          <FoodsTab
+            searchTerm={searchTerm}
+            setSearchTerm={setSearchTerm}
+            foodAvailability={foodAvailability}
+            setFoodAvailability={setFoodAvailability}
+            filteredFoods={filteredFoods}
+            onCreate={() => openModal("food")}
+            onEdit={(item) => openModal("food", item)}
+            onDelete={(item) => handleDeleteFood(item._id)}
+          />
         )}
 
         {/* Analytics Tab */}
         {activeTab === "analytics" && (
-          <div className="space-y-6">
-            {revenueData.length > 0 && (
-              <SimpleChart data={revenueData} title="7-Day Revenue Analysis" />
-            )}
-
-            {/* Order Distribution Chart */}
-            <div className="bg-white rounded-2xl shadow-lg p-6">
-              <h3 className="text-xl font-bold text-gray-900 mb-6">
-                Order Status Distribution
-              </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <div>
-                  <div className="space-y-4">
-                    {[
-                      {
-                        label: "Placed",
-                        value: orders.filter((o) => o.status === "PLACED")
-                          .length,
-                        color: "bg-yellow-500",
-                      },
-                      {
-                        label: "Preparing",
-                        value: orders.filter((o) => o.status === "PREPARING")
-                          .length,
-                        color: "bg-blue-500",
-                      },
-                      {
-                        label: "Out for Delivery",
-                        value: orders.filter(
-                          (o) => o.status === "OUT_FOR_DELIVERY"
-                        ).length,
-                        color: "bg-orange-500",
-                      },
-                      {
-                        label: "Delivered",
-                        value: orders.filter((o) => o.status === "DELIVERED")
-                          .length,
-                        color: "bg-green-500",
-                      },
-                    ].map((item) => (
-                      <div key={item.label}>
-                        <div className="flex items-center justify-between mb-2">
-                          <span className="font-semibold text-gray-700">
-                            {item.label}
-                          </span>
-                          <span className="text-2xl font-bold text-gray-900">
-                            {item.value}
-                          </span>
-                        </div>
-                        <div className="w-full bg-gray-200 rounded-full h-3">
-                          <div
-                            className={`${item.color} h-3 rounded-full transition-all`}
-                            style={{
-                              width: `${
-                                (item.value /
-                                  Math.max(orders.length, 1)) *
-                                100
-                              }%`,
-                            }}
-                          ></div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Stats */}
-                <div className="grid grid-cols-2 gap-4">
-                  {[
-                    {
-                      label: "Total Orders",
-                      value: orders.length,
-                      icon: ShoppingBag,
-                      color: "from-blue-50",
-                    },
-                    {
-                      label: "Total Users",
-                      value: users.length,
-                      icon: Users,
-                      color: "from-purple-50",
-                    },
-                    {
-                      label: "Total Revenue",
-                      value: `₹${orders
-                        .reduce((sum, o) => sum + (o.totalAmount || 0), 0)
-                        .toFixed(0)}`,
-                      icon: DollarSign,
-                      color: "from-green-50",
-                    },
-                    {
-                      label: "Avg Order Value",
-                      value: `₹${(
-                        orders.reduce((sum, o) => sum + (o.totalAmount || 0), 0) /
-                        Math.max(orders.length, 1)
-                      ).toFixed(0)}`,
-                      icon: TrendingUp,
-                      color: "from-orange-50",
-                    },
-                  ].map((item) => (
-                    <div
-                      key={item.label}
-                      className={`bg-gradient-to-br ${item.color} to-transparent rounded-2xl p-4`}
-                    >
-                      <p className="text-sm text-gray-600 mb-2">{item.label}</p>
-                      <p className="text-2xl font-bold text-gray-900">
-                        {item.value}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
+          <AnalyticsTab
+            orders={orders}
+            users={users}
+            revenueData={revenueData}
+          />
         )}
           </div>
         </main>
@@ -1134,6 +734,84 @@ const AdminDashboard = () => {
               </div>
             </div>
 
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div className="bg-gray-50 rounded-xl p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="font-semibold text-gray-900">Food Items</h3>
+                  <span className="text-xs text-gray-500">
+                    {restaurantFoods.length} items
+                  </span>
+                </div>
+                {restaurantDetailsLoading ? (
+                  <p className="text-sm text-gray-500">Loading food items...</p>
+                ) : restaurantFoods.length > 0 ? (
+                  <div className="space-y-2 max-h-60 overflow-y-auto">
+                    {restaurantFoods.map((food) => (
+                      <div
+                        key={food._id}
+                        className="flex items-center justify-between bg-white p-3 rounded-lg border"
+                      >
+                        <div>
+                          <p className="font-semibold text-gray-900">
+                            {food.title}
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            {food.category || "Uncategorized"}
+                          </p>
+                        </div>
+                        <p className="font-semibold text-gray-900">
+                          ₹{Number(food.price || 0).toFixed(2)}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-gray-500">No food items found.</p>
+                )}
+              </div>
+
+              <div className="bg-gray-50 rounded-xl p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="font-semibold text-gray-900">Staff</h3>
+                  <span className="text-xs text-gray-500">
+                    {restaurantStaff.length} members
+                  </span>
+                </div>
+                {restaurantDetailsLoading ? (
+                  <p className="text-sm text-gray-500">Loading staff...</p>
+                ) : restaurantStaff.length > 0 ? (
+                  <div className="space-y-2 max-h-60 overflow-y-auto">
+                    {restaurantStaff.map((staff) => (
+                      <div
+                        key={staff._id}
+                        className="flex items-center justify-between bg-white p-3 rounded-lg border"
+                      >
+                        <div>
+                          <p className="font-semibold text-gray-900">
+                            {staff.username}
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            {staff.staffRole || "STAFF"}
+                          </p>
+                        </div>
+                        <span
+                          className={`px-2 py-1 rounded-full text-xs font-semibold ${
+                            staff.approval
+                              ? "bg-green-100 text-green-800"
+                              : "bg-yellow-100 text-yellow-800"
+                          }`}
+                        >
+                          {staff.approval ? "Approved" : "Pending"}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-gray-500">No staff found.</p>
+                )}
+              </div>
+            </div>
+
             {selectedItem.status === "pending" && (
               <button
                 onClick={() => handleApproveRestaurant(selectedItem._id)}
@@ -1151,6 +829,128 @@ const AdminDashboard = () => {
             </button>
           </div>
         )}
+      </Modal>
+
+      <Modal
+        title={selectedItem ? "Edit Food" : "Add Food"}
+        isOpen={modals.food}
+        onClose={() => closeModal("food")}
+        isWide
+      >
+        <div className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="text-sm text-gray-600">Restaurant</label>
+              <select
+                value={foodForm.restaurantId}
+                onChange={(e) =>
+                  setFoodForm({ ...foodForm, restaurantId: e.target.value })
+                }
+                className="w-full bg-white text-gray-900 px-4 py-2 border-2 border-gray-200 rounded-lg focus:border-orange-500 outline-none transition mt-1"
+              >
+                <option value="">Select restaurant</option>
+                {restaurants.map((restaurant) => (
+                  <option key={restaurant._id} value={restaurant._id}>
+                    {restaurant.title}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="text-sm text-gray-600">Title</label>
+              <input
+                type="text"
+                value={foodForm.title}
+                onChange={(e) => setFoodForm({ ...foodForm, title: e.target.value })}
+                className="w-full bg-white text-gray-900 px-4 py-2 border-2 border-gray-200 rounded-lg focus:border-orange-500 outline-none transition mt-1"
+              />
+            </div>
+            <div>
+              <label className="text-sm text-gray-600">Price</label>
+              <input
+                type="number"
+                value={foodForm.price}
+                onChange={(e) => setFoodForm({ ...foodForm, price: e.target.value })}
+                className="w-full bg-white text-gray-900 px-4 py-2 border-2 border-gray-200 rounded-lg focus:border-orange-500 outline-none transition mt-1"
+              />
+            </div>
+            <div>
+              <label className="text-sm text-gray-600">Category</label>
+              <input
+                type="text"
+                value={foodForm.category}
+                onChange={(e) => setFoodForm({ ...foodForm, category: e.target.value })}
+                className="w-full bg-white text-gray-900 px-4 py-2 border-2 border-gray-200 rounded-lg focus:border-orange-500 outline-none transition mt-1"
+              />
+            </div>
+            <div>
+              <label className="text-sm text-gray-600">Menu Type</label>
+              <input
+                type="text"
+                value={foodForm.menuType}
+                onChange={(e) => setFoodForm({ ...foodForm, menuType: e.target.value })}
+                className="w-full bg-white text-gray-900 px-4 py-2 border-2 border-gray-200 rounded-lg focus:border-orange-500 outline-none transition mt-1"
+              />
+            </div>
+            <div>
+              <label className="text-sm text-gray-600">Main Image URL</label>
+              <input
+                type="text"
+                value={foodForm.mainImg}
+                onChange={(e) => setFoodForm({ ...foodForm, mainImg: e.target.value })}
+                className="w-full bg-white text-gray-900 px-4 py-2 border-2 border-gray-200 rounded-lg focus:border-orange-500 outline-none transition mt-1"
+              />
+            </div>
+            <div>
+              <label className="text-sm text-gray-600">Discount (%)</label>
+              <input
+                type="number"
+                value={foodForm.discount}
+                onChange={(e) => setFoodForm({ ...foodForm, discount: e.target.value })}
+                className="w-full bg-white text-gray-900 px-4 py-2 border-2 border-gray-200 rounded-lg focus:border-orange-500 outline-none transition mt-1"
+              />
+            </div>
+            <div className="flex items-center gap-2 mt-6">
+              <input
+                id="food-available"
+                type="checkbox"
+                checked={Boolean(foodForm.isAvailable)}
+                onChange={(e) =>
+                  setFoodForm({ ...foodForm, isAvailable: e.target.checked })
+                }
+                className="h-4 w-4"
+              />
+              <label htmlFor="food-available" className="text-sm text-gray-700">
+                Available
+              </label>
+            </div>
+          </div>
+
+          <div>
+            <label className="text-sm text-gray-600">Description</label>
+            <textarea
+              value={foodForm.description}
+              onChange={(e) => setFoodForm({ ...foodForm, description: e.target.value })}
+              className="w-full bg-white text-gray-900 px-4 py-2 border-2 border-gray-200 rounded-lg focus:border-orange-500 outline-none transition mt-1"
+              rows={3}
+            />
+          </div>
+
+          <div className="flex gap-3 pt-4 border-t">
+            <button
+              onClick={() => closeModal("food")}
+              className="flex-1 bg-gray-200 text-gray-900 py-2 rounded-lg font-semibold hover:bg-gray-300 transition"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={() => (selectedItem ? handleUpdateFood() : handleCreateFood())}
+              className="flex-1 bg-gradient-to-r from-orange-500 to-orange-600 text-white py-2 rounded-lg font-semibold hover:shadow-lg transition"
+            >
+              {selectedItem ? "Update" : "Create"}
+            </button>
+          </div>
+        </div>
       </Modal>
     </div>
   );

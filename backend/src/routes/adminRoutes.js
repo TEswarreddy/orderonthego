@@ -11,8 +11,13 @@ const {
   getOrderById,
   updateOrderStatus,
   deleteOrder,
+  getAllFoodsAdmin,
+  createFoodAdmin,
+  updateFoodAdmin,
+  deleteFoodAdmin,
   getRevenueAnalytics,
   getOrderDistribution,
+  getRestaurantStaff,
   getAdminProfile,
   updateAdminProfile,
   uploadAdminProfileImage,
@@ -41,12 +46,19 @@ router.delete("/users/:id", adminProtect, deleteUser);
 
 // Restaurant Management
 router.put("/approve-restaurant/:id", adminProtect, approveRestaurant);
+router.get("/restaurants/:id/staff", adminProtect, getRestaurantStaff);
 
 // Orders Management
 router.get("/orders", adminProtect, getAllOrders);
 router.get("/orders/:id", adminProtect, getOrderById);
 router.put("/orders/:id/status", adminProtect, updateOrderStatus);
 router.delete("/orders/:id", adminProtect, deleteOrder);
+
+// Foods Management
+router.get("/foods", adminProtect, getAllFoodsAdmin);
+router.post("/foods", adminProtect, createFoodAdmin);
+router.put("/foods/:id", adminProtect, updateFoodAdmin);
+router.delete("/foods/:id", adminProtect, deleteFoodAdmin);
 
 // Analytics
 router.get("/analytics/revenue", adminProtect, getRevenueAnalytics);

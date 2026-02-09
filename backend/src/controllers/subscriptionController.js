@@ -3,29 +3,35 @@ const Food = require("../models/Food");
 const Order = require("../models/Order");
 const crypto = require("crypto");
 
+const ensureRestaurantSubscription = async (restaurantId) => {
+  let subscription = await Subscription.findOne({ restaurantId });
+
+  // If no subscription exists, create a FREE plan
+  if (!subscription) {
+    const planFeatures = Subscription.getPlanFeatures("FREE");
+    subscription = await Subscription.create({
+      restaurantId,
+      plan: "FREE",
+      status: "ACTIVE",
+      features: {
+        maxMenuItems: planFeatures.maxMenuItems,
+        maxOrdersPerDay: planFeatures.maxOrdersPerDay,
+        analyticsAccess: planFeatures.analyticsAccess,
+        prioritySupport: planFeatures.prioritySupport,
+        customBranding: planFeatures.customBranding,
+      },
+    });
+  }
+
+  return subscription;
+};
+
 // @desc    Get subscription for logged-in restaurant
 // @route   GET /api/subscriptions/my-subscription
 // @access  Private (RESTAURANT)
 const getMySubscription = async (req, res) => {
   try {
-    let subscription = await Subscription.findOne({ restaurantId: req.user._id });
-
-    // If no subscription exists, create a FREE plan
-    if (!subscription) {
-      const planFeatures = Subscription.getPlanFeatures("FREE");
-      subscription = await Subscription.create({
-        restaurantId: req.user._id,
-        plan: "FREE",
-        status: "ACTIVE",
-        features: {
-          maxMenuItems: planFeatures.maxMenuItems,
-          maxOrdersPerDay: planFeatures.maxOrdersPerDay,
-          analyticsAccess: planFeatures.analyticsAccess,
-          prioritySupport: planFeatures.prioritySupport,
-          customBranding: planFeatures.customBranding,
-        },
-      });
-    }
+    let subscription = await ensureRestaurantSubscription(req.user._id);
 
     // Check if subscription is still active
     const isActive = subscription.isActive();
@@ -249,11 +255,7 @@ const checkFeatureLimit = async (req, res) => {
 // @access  Private (RESTAURANT)
 const getUsageStats = async (req, res) => {
   try {
-    const subscription = await Subscription.findOne({ restaurantId: req.user._id });
-
-    if (!subscription) {
-      return res.status(404).json({ message: "Subscription not found" });
-    }
+    const subscription = await ensureRestaurantSubscription(req.user._id);
 
     const totalMenuItems = await Food.countDocuments({ restaurantId: req.user._id });
 

@@ -65,3 +65,54 @@ exports.getFoodsByRestaurant = async (req, res) => {
   const foods = await Food.find({ restaurantId: req.params.id });
   res.json(foods);
 };
+
+// Update food item (Restaurant only)
+exports.updateFood = async (req, res) => {
+  try {
+    const { title, price, description, category } = req.body;
+    const food = await Food.findById(req.params.id);
+
+    if (!food) {
+      return res.status(404).json({ message: "Food not found" });
+    }
+
+    // Verify ownership
+    if (food.restaurantId.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: "Not authorized to update this food" });
+    }
+
+    // Update fields
+    if (title) food.title = title;
+    if (price !== undefined) food.price = Number(price);
+    if (description) food.description = description;
+    if (category) food.category = category;
+
+    await food.save();
+    res.json(food);
+  } catch (error) {
+    console.error("Update food error:", error);
+    res.status(500).json({ message: "Failed to update food" });
+  }
+};
+
+// Delete food item (Restaurant only)
+exports.deleteFood = async (req, res) => {
+  try {
+    const food = await Food.findById(req.params.id);
+
+    if (!food) {
+      return res.status(404).json({ message: "Food not found" });
+    }
+
+    // Verify ownership
+    if (food.restaurantId.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: "Not authorized to delete this food" });
+    }
+
+    await Food.findByIdAndDelete(req.params.id);
+    res.json({ message: "Food item deleted successfully" });
+  } catch (error) {
+    console.error("Delete food error:", error);
+    res.status(500).json({ message: "Failed to delete food" });
+  }
+};

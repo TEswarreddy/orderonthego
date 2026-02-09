@@ -20,6 +20,12 @@ const Payment = () => {
       return;
     }
 
+    const razorpayKey = import.meta.env.VITE_RAZORPAY_KEY_ID;
+    if (!razorpayKey) {
+      alert("❌ Razorpay is not configured. Please add VITE_RAZORPAY_KEY_ID to your frontend env.");
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -27,7 +33,7 @@ const Payment = () => {
       const { data } = await axios.post("/payment/create-order");
 
       const options = {
-        key: "rzp_test_SDZuVJeLueHBta", // Razorpay KEY_ID
+        key: razorpayKey,
         amount: data.razorpayOrder.amount,
         currency: "INR",
         name: "Order on the Go",

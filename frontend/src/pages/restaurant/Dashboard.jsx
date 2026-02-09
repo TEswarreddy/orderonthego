@@ -20,6 +20,12 @@ const RestaurantDashboard = () => {
   const [subscriptionUsage, setSubscriptionUsage] = useState(null);
   const [availablePlans, setAvailablePlans] = useState([]);
   const [cancelling, setCancelling] = useState(false);
+  const [editingFood, setEditingFood] = useState(null);
+  const [showEditForm, setShowEditForm] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [filterCategory, setFilterCategory] = useState("all");
+  const [orderSearch, setOrderSearch] = useState("");
+  const [orderFilter, setOrderFilter] = useState("all");
   const [newFood, setNewFood] = useState({
     title: "",
     price: "",
@@ -37,8 +43,8 @@ const RestaurantDashboard = () => {
       const foodsRes = await axios.get("/foods");
       setFoods(foodsRes.data || []);
 
-      const ordersRes = await axios.get("/orders");
-      const restaurantOrders = (ordersRes.data || []).filter((order) => order.restaurantId === user._id);
+      const ordersRes = await axios.get("/orders/restaurant");
+      const restaurantOrders = ordersRes.data || [];
 
       const averageRating =
         foodsRes.data?.reduce((sum, food) => sum + (food.rating || 0), 0) / (foodsRes.data?.length || 1) || 0;
@@ -63,9 +69,19 @@ const RestaurantDashboard = () => {
         setSubscriptionUsage(usageRes.data);
         setAvailablePlans(plansRes.data || []);
       } catch (err) {
+        if (err.response?.status === 401) {
+          console.warn("⚠️ Subscription session expired. Please log in again.");
+        } else if (err.response?.status === 404) {
+          console.warn("⚠️ Subscription endpoints not found. Backend may still be starting.");
+        }
         console.error("Failed to fetch subscription data:", err);
       }
     } catch (err) {
+      if (err.response?.status === 401) {
+        console.warn("⚠️ Session expired. Please log in again.");
+      } else if (err.response?.status === 404) {
+        console.warn("⚠️ API endpoints not found. Backend may still be starting.");
+      }
       console.error("Failed to fetch restaurant data:", err);
     } finally {
       setLoading(false);
@@ -117,6 +133,39 @@ const RestaurantDashboard = () => {
       } catch (err) {
         alert("❌ Failed to delete item");
       }
+    }
+  };
+
+  const handleEditFood = (food) => {
+    setEditingFood(food);
+    setNewFood({
+      title: food.title,
+      price: food.price.toString(),
+      description: food.description || "",
+      category: food.category,
+    });
+    setShowEditForm(true);
+  };
+
+  const handleUpdateFood = async () => {
+    if (!newFood.title || !newFood.price || !newFood.category) {
+      alert("Please fill all required fields");
+      return;
+    }
+
+    try {
+      const res = await axios.put(`/foods/${editingFood._id}`, {
+        ...newFood,
+        price: parseFloat(newFood.price),
+      });
+      setFoods(foods.map((f) => (f._id === editingFood._id ? res.data : f)));
+      setEditingFood(null);
+      setShowEditForm(false);
+      setNewFood({ title: "", price: "", description: "", category: "pizza" });
+      alert("✅ Food item updated successfully!");
+      fetchRestaurantData();
+    } catch (err) {
+      alert("❌ " + (err.response?.data?.message || "Failed to update food item"));
     }
   };
 
@@ -289,19 +338,19 @@ const RestaurantDashboard = () => {
         </div>
 
         {/* Tabs */}
-        <div className="flex gap-4 mb-6 border-b">
-          {["items", "orders", "subscription"].map((tab) => (
+        <div className="flex gap-4 mb-6 border-b overflow-x-auto">
+          {["items", "orders", "subscription", "settings"].map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
-              className={`px-6 py-3 font-semibold transition border-b-2 ${
+              className={`px-6 py-3 font-semibold transition border-b-2 whitespace-nowrap ${
                 activeTab === tab
                   ? "border-orange-500 text-orange-600"
                   : "border-transparent text-gray-600 hover:text-gray-900"
               }`}
             >
-              {tab === "items" ? "Menu Items" : tab === "orders" ? "Orders" : "Subscription"}
-              {tab !== "subscription" && ` (${tab === "items" ? stats.totalItems : stats.activeOrders})`}
+              {tab === "items" ? "📋 Menu Items" : tab === "orders" ? "📦 Orders" : tab === "subscription" ? "👑 Subscription" : "⚙️ Settings"}
+              {(tab === "items" || tab === "orders") && ` (${tab === "items" ? stats.totalItems : stats.activeOrders})`}
             </button>
           ))}
         </div>
@@ -310,14 +359,16 @@ const RestaurantDashboard = () => {
         {activeTab === "items" && (
           <div className="space-y-6">
             {/* Add Food Form */}
-            {!showAddForm ? (
+            {!showAddForm && !showEditForm ? (
               <button
                 onClick={() => setShowAddForm(true)}
                 className="flex items-center gap-2 bg-gradient-to-r from-orange-500 to-red-500 text-white px-6 py-3 rounded-lg hover:shadow-lg transition font-semibold"
               >
                 <Plus size={20} /> Add New Food Item
               </button>
-            ) : (
+            ) : null}
+
+            {showAddForm && !showEditForm && (
               <div className="bg-white rounded-lg shadow-lg p-6">
                 <h2 className="text-2xl font-bold text-gray-800 mb-6">Add New Food Item</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
@@ -376,114 +427,270 @@ const RestaurantDashboard = () => {
               </div>
             )}
 
-            {/* Food Items Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {foods.map((food) => (
-                <div key={food._id} className="bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition">
-                  {/* Image Placeholder */}
-                  <div className="w-full h-40 bg-gradient-to-br from-orange-200 to-red-200"></div>
-
-                  {/* Content */}
-                  <div className="p-4">
-                    <h3 className="font-bold text-lg text-gray-900 mb-1">{food.title}</h3>
-                    <p className="text-sm text-gray-600 mb-3">{food.description || "No description"}</p>
-
-                    <div className="flex items-center justify-between mb-4 pb-4 border-b">
-                      <div>
-                        <p className="text-sm text-gray-600">Price</p>
-                        <p className="text-2xl font-bold text-orange-600">₹{food.price?.toFixed(2) || "N/A"}</p>
-                      </div>
-                      <div>
-                        <p className="text-sm text-gray-600">Category</p>
-                        <p className="font-semibold text-gray-800 capitalize">{food.category || "Food"}</p>
-                      </div>
-                    </div>
-
-                    {/* Rating */}
-                    <div className="mb-4">
-                      <p className="text-sm text-gray-600">Rating</p>
-                      <p className="text-lg font-bold text-yellow-500">{food.rating ? `${food.rating} ⭐` : "No ratings"}</p>
-                    </div>
-
-                    {/* Actions */}
-                    <div className="flex gap-2">
-                      <button className="flex-1 flex items-center justify-center gap-2 bg-blue-50 hover:bg-blue-100 text-blue-600 py-2 rounded-lg transition font-semibold">
-                        <Edit2 size={18} /> Edit
-                      </button>
-                      <button
-                        onClick={() => handleDeleteFood(food._id)}
-                        className="flex-1 flex items-center justify-center gap-2 bg-red-50 hover:bg-red-100 text-red-600 py-2 rounded-lg transition font-semibold"
-                      >
-                        <Trash2 size={18} /> Delete
-                      </button>
-                    </div>
-                  </div>
+            {showEditForm && editingFood && (
+              <div className="bg-white rounded-lg shadow-lg p-6 border-l-4 border-orange-500">
+                <h2 className="text-2xl font-bold text-gray-800 mb-6">✏️ Edit Food Item</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                  <input
+                    type="text"
+                    placeholder="Food Name *"
+                    value={newFood.title}
+                    onChange={(e) => setNewFood({ ...newFood, title: e.target.value })}
+                    className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                  />
+                  <input
+                    type="number"
+                    placeholder="Price (₹) *"
+                    value={newFood.price}
+                    onChange={(e) => setNewFood({ ...newFood, price: e.target.value })}
+                    className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                  />
                 </div>
-              ))}
-            </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                  <select
+                    value={newFood.category}
+                    onChange={(e) => setNewFood({ ...newFood, category: e.target.value })}
+                    className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                  >
+                    <option value="pizza">Pizza</option>
+                    <option value="sushi">Sushi</option>
+                    <option value="burger">Burger</option>
+                    <option value="dessert">Dessert</option>
+                    <option value="beverage">Beverage</option>
+                  </select>
+                </div>
+
+                <textarea
+                  placeholder="Description"
+                  value={newFood.description}
+                  onChange={(e) => setNewFood({ ...newFood, description: e.target.value })}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent resize-none mb-4"
+                  rows={3}
+                />
+
+                <div className="flex gap-3">
+                  <button
+                    onClick={handleUpdateFood}
+                    className="bg-orange-600 hover:bg-orange-700 text-white px-6 py-2 rounded-lg transition font-semibold"
+                  >
+                    Save Changes
+                  </button>
+                  <button
+                    onClick={() => {
+                      setShowEditForm(false);
+                      setEditingFood(null);
+                      setNewFood({ title: "", price: "", description: "", category: "pizza" });
+                    }}
+                    className="bg-gray-400 hover:bg-gray-500 text-white px-6 py-2 rounded-lg transition font-semibold"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Search and Filter */}
+            {!showAddForm && !showEditForm && (
+              <div className="bg-white rounded-lg shadow p-4 flex gap-4 flex-wrap items-center">
+                <input
+                  type="text"
+                  placeholder="🔍 Search by name..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value.toLowerCase())}
+                  className="flex-1 min-w-64 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                />
+                <select
+                  value={filterCategory}
+                  onChange={(e) => setFilterCategory(e.target.value)}
+                  className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                >
+                  <option value="all">All Categories</option>
+                  <option value="pizza">Pizza</option>
+                  <option value="sushi">Sushi</option>
+                  <option value="burger">Burger</option>
+                  <option value="dessert">Dessert</option>
+                  <option value="beverage">Beverage</option>
+                </select>
+                {(searchQuery || filterCategory !== "all") && (
+                  <button
+                    onClick={() => {
+                      setSearchQuery("");
+                      setFilterCategory("all");
+                    }}
+                    className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition font-semibold"
+                  >
+                    ✕ Clear
+                  </button>
+                )}
+              </div>
+            )}
+
+            {/* Food Items Grid */}
+            {!showAddForm && !showEditForm && (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {foods
+                  .filter((food) => {
+                    const matchesSearch = food.title.toLowerCase().includes(searchQuery);
+                    const matchesCategory = filterCategory === "all" || food.category === filterCategory;
+                    return matchesSearch && matchesCategory;
+                  })
+                  .map((food) => (
+                    <div key={food._id} className="bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition">
+                      {/* Image Placeholder */}
+                      <div className="w-full h-40 bg-gradient-to-br from-orange-200 to-red-200"></div>
+
+                      {/* Content */}
+                      <div className="p-4">
+                        <h3 className="font-bold text-lg text-gray-900 mb-1">{food.title}</h3>
+                        <p className="text-sm text-gray-600 mb-3">{food.description || "No description"}</p>
+
+                        <div className="flex items-center justify-between mb-4 pb-4 border-b">
+                          <div>
+                            <p className="text-sm text-gray-600">Price</p>
+                            <p className="text-2xl font-bold text-orange-600">₹{food.price?.toFixed(2) || "N/A"}</p>
+                          </div>
+                          <div>
+                            <p className="text-sm text-gray-600">Category</p>
+                            <p className="font-semibold text-gray-800 capitalize">{food.category || "Food"}</p>
+                          </div>
+                        </div>
+
+                        {/* Rating */}
+                        <div className="mb-4">
+                          <p className="text-sm text-gray-600">Rating</p>
+                          <p className="text-lg font-bold text-yellow-500">{food.rating ? `${food.rating} ⭐` : "No ratings"}</p>
+                        </div>
+
+                        {/* Actions */}
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => handleEditFood(food)}
+                            className="flex-1 flex items-center justify-center gap-2 bg-blue-50 hover:bg-blue-100 text-blue-600 py-2 rounded-lg transition font-semibold"
+                          >
+                            <Edit2 size={18} /> Edit
+                          </button>
+                          <button
+                            onClick={() => handleDeleteFood(food._id)}
+                            className="flex-1 flex items-center justify-center gap-2 bg-red-50 hover:bg-red-100 text-red-600 py-2 rounded-lg transition font-semibold"
+                          >
+                            <Trash2 size={18} /> Delete
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+              </div>
+            )}
           </div>
         )}
 
         {/* Orders Tab */}
         {activeTab === "orders" && (
-          <div className="bg-white rounded-lg shadow-lg overflow-hidden">
-            {orders.length === 0 ? (
-              <div className="text-center py-12">
-                <Clock size={48} className="mx-auto text-gray-300 mb-4" />
-                <p className="text-gray-600 text-lg">No active orders</p>
-              </div>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead className="bg-gray-100 border-b-2 border-gray-200">
-                    <tr>
-                      <th className="text-left py-4 px-6 font-semibold text-gray-800">Order ID</th>
-                      <th className="text-left py-4 px-6 font-semibold text-gray-800">Items</th>
-                      <th className="text-left py-4 px-6 font-semibold text-gray-800">Amount</th>
-                      <th className="text-left py-4 px-6 font-semibold text-gray-800">Current Status</th>
-                      <th className="text-left py-4 px-6 font-semibold text-gray-800">Update Status</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {orders.map((order) => (
-                      <tr key={order._id} className="border-b hover:bg-gray-50 transition">
-                        <td className="py-4 px-6 font-mono text-gray-700">#{order._id?.slice(-6) || "N/A"}</td>
-                        <td className="py-4 px-6 text-gray-700">{order.items?.length || 0} items</td>
-                        <td className="py-4 px-6 font-semibold text-gray-900">₹{(order.totalAmount || 0).toFixed(2)}</td>
-                        <td className="py-4 px-6">
-                          <span
-                            className={`px-3 py-1 rounded-full text-sm font-semibold ${
-                              order.status?.toLowerCase() === "delivered"
-                                ? "bg-green-100 text-green-800"
-                                : order.status?.toLowerCase() === "pending"
-                                ? "bg-yellow-100 text-yellow-800"
-                                : order.status?.toLowerCase() === "preparing"
-                                ? "bg-purple-100 text-purple-800"
-                                : "bg-blue-100 text-blue-800"
-                            }`}
-                          >
-                            {order.status || "Pending"}
-                          </span>
-                        </td>
-                        <td className="py-4 px-6">
-                          <select
-                            value={order.status || "pending"}
-                            onChange={(e) => updateOrderStatus(order._id, e.target.value)}
-                            className="px-3 py-1 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm font-semibold"
-                          >
-                            <option value="pending">Pending</option>
-                            <option value="confirmed">Confirmed</option>
-                            <option value="preparing">Preparing</option>
-                            <option value="ready">Ready</option>
-                            <option value="delivered">Delivered</option>
-                          </select>
-                        </td>
+          <div className="space-y-4">
+            {/* Search and Filter */}
+            <div className="bg-white rounded-lg shadow p-4 flex gap-4 flex-wrap items-center">
+              <input
+                type="text"
+                placeholder="🔍 Search by Order ID..."
+                value={orderSearch}
+                onChange={(e) => setOrderSearch(e.target.value)}
+                className="flex-1 min-w-64 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+              />
+              <select
+                value={orderFilter}
+                onChange={(e) => setOrderFilter(e.target.value)}
+                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+              >
+                <option value="all">All Status</option>
+                <option value="pending">Pending</option>
+                <option value="confirmed">Confirmed</option>
+                <option value="preparing">Preparing</option>
+                <option value="ready">Ready</option>
+                <option value="delivered">Delivered</option>
+              </select>
+              {(orderSearch || orderFilter !== "all") && (
+                <button
+                  onClick={() => {
+                    setOrderSearch("");
+                    setOrderFilter("all");
+                  }}
+                  className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition font-semibold"
+                >
+                  ✕ Clear
+                </button>
+              )}
+            </div>
+
+            {/* Orders Table */}
+            <div className="bg-white rounded-lg shadow-lg overflow-hidden">
+              {orders.length === 0 ? (
+                <div className="text-center py-12">
+                  <Clock size={48} className="mx-auto text-gray-300 mb-4" />
+                  <p className="text-gray-600 text-lg">No active orders</p>
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead className="bg-gray-100 border-b-2 border-gray-200">
+                      <tr>
+                        <th className="text-left py-4 px-6 font-semibold text-gray-800">Order ID</th>
+                        <th className="text-left py-4 px-6 font-semibold text-gray-800">Items</th>
+                        <th className="text-left py-4 px-6 font-semibold text-gray-800">Amount</th>
+                        <th className="text-left py-4 px-6 font-semibold text-gray-800">Current Status</th>
+                        <th className="text-left py-4 px-6 font-semibold text-gray-800">Update Status</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
+                    </thead>
+                    <tbody>
+                      {orders
+                        .filter((order) => {
+                          const matchesSearch = order._id.includes(orderSearch);
+                          const matchesFilter =
+                            orderFilter === "all" || order.status?.toLowerCase() === orderFilter.toLowerCase();
+                          return matchesSearch && matchesFilter;
+                        })
+                        .map((order) => (
+                          <tr key={order._id} className="border-b hover:bg-gray-50 transition">
+                            <td className="py-4 px-6 font-mono text-gray-700 font-semibold">#{order._id?.slice(-6) || "N/A"}</td>
+                            <td className="py-4 px-6 text-gray-700">{order.items?.length || 0} items</td>
+                            <td className="py-4 px-6 font-semibold text-gray-900">₹{(order.totalAmount || 0).toFixed(2)}</td>
+                            <td className="py-4 px-6">
+                              <span
+                                className={`px-3 py-1 rounded-full text-sm font-semibold ${
+                                  order.status?.toLowerCase() === "delivered"
+                                    ? "bg-green-100 text-green-800"
+                                    : order.status?.toLowerCase() === "pending"
+                                    ? "bg-yellow-100 text-yellow-800"
+                                    : order.status?.toLowerCase() === "preparing"
+                                    ? "bg-purple-100 text-purple-800"
+                                    : order.status?.toLowerCase() === "confirmed"
+                                    ? "bg-blue-100 text-blue-800"
+                                    : "bg-orange-100 text-orange-800"
+                                }`}
+                              >
+                                {order.status || "Pending"}
+                              </span>
+                            </td>
+                            <td className="py-4 px-6">
+                              <select
+                                value={order.status || "pending"}
+                                onChange={(e) => updateOrderStatus(order._id, e.target.value)}
+                                className="px-3 py-1 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm font-semibold"
+                              >
+                                <option value="pending">Pending</option>
+                                <option value="confirmed">Confirmed</option>
+                                <option value="preparing">Preparing</option>
+                                <option value="ready">Ready</option>
+                                <option value="delivered">Delivered</option>
+                              </select>
+                            </td>
+                          </tr>
+                        ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
           </div>
         )}
         {/* Subscription Tab */}
@@ -749,7 +956,141 @@ const RestaurantDashboard = () => {
               </Link>
             </div>
           </div>
-        )}      </div>
+        )}
+
+        {/* Settings Tab */}
+        {activeTab === "settings" && (
+          <div className="space-y-6">
+            {/* Restaurant Profile */}
+            <div className="bg-white rounded-xl shadow-lg p-8">
+              <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-2">
+                <span>🏪</span> Restaurant Profile
+              </h2>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <div>
+                  <label className="block text-sm font-semibold text-gray-600 mb-2">Restaurant Name</label>
+                  <input
+                    type="text"
+                    value={user?.name || ""}
+                    disabled
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-700"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-gray-600 mb-2">Email Address</label>
+                  <input
+                    type="email"
+                    value={user?.email || ""}
+                    disabled
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-700"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <div>
+                  <label className="block text-sm font-semibold text-gray-600 mb-2">Account Type</label>
+                  <div className="px-4 py-2 border border-gray-300 rounded-lg bg-gray-50">
+                    <span className="text-gray-700 font-semibold px-3 py-1 bg-orange-100 text-orange-700 rounded inline-block">
+                      🍽️ Restaurant Owner
+                    </span>
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-gray-600 mb-2">Member Since</label>
+                  <input
+                    type="text"
+                    value={user?.createdAt ? new Date(user.createdAt).toLocaleDateString() : "N/A"}
+                    disabled
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-700"
+                  />
+                </div>
+              </div>
+
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <p className="text-sm text-blue-800">
+                  ℹ️ <strong>Contact Support</strong> to update your restaurant details. <Link to="/help" className="underline font-semibold">Get help here</Link>
+                </p>
+              </div>
+            </div>
+
+            {/* Business Statistics */}
+            <div className="bg-white rounded-xl shadow-lg p-8">
+              <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-2">
+                <TrendingUp size={28} className="text-orange-600" /> Business Statistics
+              </h2>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg p-6">
+                  <p className="text-sm text-gray-600 mb-2">Total Menu Items</p>
+                  <p className="text-4xl font-bold text-blue-600">{stats.totalItems}</p>
+                </div>
+                <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-lg p-6">
+                  <p className="text-sm text-gray-600 mb-2">Active Orders Today</p>
+                  <p className="text-4xl font-bold text-orange-600">{stats.activeOrders}</p>
+                </div>
+                <div className="bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-lg p-6">
+                  <p className="text-sm text-gray-600 mb-2">Total Revenue</p>
+                  <p className="text-4xl font-bold text-emerald-600">₹{Math.round(stats.totalRevenue)}</p>
+                </div>
+                <div className="bg-gradient-to-br from-yellow-50 to-yellow-100 rounded-lg p-6">
+                  <p className="text-sm text-gray-600 mb-2">Average Rating</p>
+                  <p className="text-4xl font-bold text-yellow-600">{stats.averageRating} ⭐</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Security & Preferences */}
+            <div className="bg-white rounded-xl shadow-lg p-8">
+              <h2 className="text-2xl font-bold text-gray-900 mb-6">🔒 Security & Preferences</h2>
+
+              <div className="space-y-4">
+                <div className="flex items-center justify-between border-b pb-4">
+                  <div>
+                    <p className="font-semibold text-gray-900">Change Password</p>
+                    <p className="text-sm text-gray-600">Update your account password regularly</p>
+                  </div>
+                  <button className="px-6 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition font-semibold">
+                    Change
+                  </button>
+                </div>
+
+                <div className="flex items-center justify-between border-b pb-4">
+                  <div>
+                    <p className="font-semibold text-gray-900">Two-Factor Authentication</p>
+                    <p className="text-sm text-gray-600">Add extra security to your account</p>
+                  </div>
+                  <button className="px-6 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition font-semibold">
+                    Enable
+                  </button>
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="font-semibold text-gray-900">Email Notifications</p>
+                    <p className="text-sm text-gray-600">Get updates about orders and account activity</p>
+                  </div>
+                  <button className="px-6 py-2 bg-green-100 hover:bg-green-200 text-green-700 rounded-lg transition font-semibold">
+                    ✓ Enabled
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Logout Section */}
+            <div className="bg-red-50 border border-red-200 rounded-xl p-8 text-center">
+              <h2 className="text-2xl font-bold text-red-900 mb-2">Danger Zone</h2>
+              <p className="text-red-700 mb-4">
+                Once you log out, you will need to log in again to access your restaurant dashboard.
+              </p>
+              <button className="px-8 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg font-semibold transition">
+                🚪 Logout
+              </button>
+            </div>
+          </div>
+        )}
+            </div>
     </div>
   );
 };

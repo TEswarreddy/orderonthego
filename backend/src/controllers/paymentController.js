@@ -4,13 +4,20 @@ const Payment = require("../models/Payment");
 const Cart = require("../models/Cart");
 const Order = require("../models/Order");
 
-const razorpay = new Razorpay({
-  key_id: process.env.RAZORPAY_KEY_ID,
-  key_secret: process.env.RAZORPAY_KEY_SECRET,
-});
+let razorpay;
+if (process.env.RAZORPAY_KEY_ID && process.env.RAZORPAY_KEY_SECRET) {
+  razorpay = new Razorpay({
+    key_id: process.env.RAZORPAY_KEY_ID,
+    key_secret: process.env.RAZORPAY_KEY_SECRET,
+  });
+}
 
 // CREATE ORDER
 exports.createOrder = async (req, res) => {
+  if (!razorpay) {
+    return res.status(500).json({ message: "Payment service not configured. Please contact support." });
+  }
+  
   const cart = await Cart.findOne({ userId: req.user._id });
 
   if (!cart || cart.items.length === 0) {

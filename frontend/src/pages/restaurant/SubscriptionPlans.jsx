@@ -61,8 +61,14 @@ const SubscriptionPlans = () => {
         const plan = plans.find((p) => p.name === planName);
         if (!plan) return;
 
+        const razorpayKey = import.meta.env.VITE_RAZORPAY_KEY_ID;
+        if (!razorpayKey) {
+          alert("❌ Razorpay is not configured. Please add VITE_RAZORPAY_KEY_ID to your frontend env.");
+          return;
+        }
+
         const options = {
-          key: "rzp_test_dummy_key", // Replace with actual Razorpay key
+          key: razorpayKey,
           amount: plan.price * 100, // Razorpay expects amount in paise
           currency: "INR",
           name: "Order On The Go",

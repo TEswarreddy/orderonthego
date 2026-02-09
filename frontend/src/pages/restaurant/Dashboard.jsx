@@ -392,7 +392,7 @@ const RestaurantDashboard = () => {
                   <select
                     value={newFood.category}
                     onChange={(e) => setNewFood({ ...newFood, category: e.target.value })}
-                    className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                    className="bg-white text-gray-900 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                   >
                     <option value="pizza">Pizza</option>
                     <option value="sushi">Sushi</option>
@@ -451,7 +451,7 @@ const RestaurantDashboard = () => {
                   <select
                     value={newFood.category}
                     onChange={(e) => setNewFood({ ...newFood, category: e.target.value })}
-                    className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                    className="bg-white text-gray-900 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                   >
                     <option value="pizza">Pizza</option>
                     <option value="sushi">Sushi</option>
@@ -503,7 +503,7 @@ const RestaurantDashboard = () => {
                 <select
                   value={filterCategory}
                   onChange={(e) => setFilterCategory(e.target.value)}
-                  className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                  className="bg-white text-gray-900 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                 >
                   <option value="all">All Categories</option>
                   <option value="pizza">Pizza</option>
@@ -600,7 +600,7 @@ const RestaurantDashboard = () => {
               <select
                 value={orderFilter}
                 onChange={(e) => setOrderFilter(e.target.value)}
-                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                className="bg-white text-gray-900 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
               >
                 <option value="all">All Status</option>
                 <option value="pending">Pending</option>
@@ -675,7 +675,7 @@ const RestaurantDashboard = () => {
                               <select
                                 value={order.status || "pending"}
                                 onChange={(e) => updateOrderStatus(order._id, e.target.value)}
-                                className="px-3 py-1 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm font-semibold"
+                                className="bg-white text-gray-900 px-3 py-1 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm font-semibold"
                               >
                                 <option value="pending">Pending</option>
                                 <option value="confirmed">Confirmed</option>

@@ -399,7 +399,7 @@ const AdminDashboard = () => {
                     setFilterStatus(e.target.value);
                     setCurrentPage(1);
                   }}
-                  className="px-4 py-2 border-2 border-gray-200 rounded-lg focus:border-orange-500 outline-none transition"
+                  className="bg-white text-gray-900 px-4 py-2 border-2 border-gray-200 rounded-lg focus:border-orange-500 outline-none transition"
                 >
                   <option value="all">All Status</option>
                   <option value="PLACED">Placed</option>
@@ -692,7 +692,7 @@ const AdminDashboard = () => {
                   onChange={(e) =>
                     handleUpdateOrder(selectedOrder._id, e.target.value)
                   }
-                  className="w-full px-4 py-2 border-2 border-gray-200 rounded-lg focus:border-orange-500 outline-none transition"
+                  className="bg-white text-gray-900 w-full px-4 py-2 border-2 border-gray-200 rounded-lg focus:border-orange-500 outline-none transition"
                 >
                   <option value="PLACED">Placed</option>
                   <option value="PREPARING">Preparing</option>
@@ -745,7 +745,7 @@ const AdminDashboard = () => {
                 <p className="text-sm text-gray-600 mb-3">Status</p>
                 <select
                   defaultValue={selectedUser.status}
-                  className="w-full px-4 py-2 border-2 border-gray-200 rounded-lg focus:border-orange-500 outline-none transition"
+                  className="bg-white text-gray-900 w-full px-4 py-2 border-2 border-gray-200 rounded-lg focus:border-orange-500 outline-none transition"
                 >
                   <option value="active">Active</option>
                   <option value="inactive">Inactive</option>

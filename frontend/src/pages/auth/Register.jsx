@@ -51,7 +51,7 @@ const Register = () => {
         />
         <select
           name="userType"
-          className="w-full p-2 mb-3 border"
+          className="w-full p-2 mb-3 border bg-white text-gray-900"
           onChange={handleChange}
         >
           <option value="USER">User</option>

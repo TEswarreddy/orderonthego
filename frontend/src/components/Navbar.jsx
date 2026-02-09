@@ -67,6 +67,15 @@ const Navbar = () => {
             </>
           )}
 
+          {user?.userType === "STAFF" && (
+            <Link 
+              to="/restaurant"
+              className="hover:text-yellow-200 transition-colors duration-200 font-medium px-3 py-2 rounded-lg hover:bg-white hover:bg-opacity-10"
+            >
+              🏪 Dashboard
+            </Link>
+          )}
+
           {user?.userType === "ADMIN" && (
             <Link 
               to="/admin"
@@ -167,6 +176,16 @@ const Navbar = () => {
                 <SubscriptionBadge />
               </div>
             </>
+          )}
+
+          {user?.userType === "STAFF" && (
+            <Link 
+              to="/restaurant"
+              className="block hover:text-yellow-200 transition-colors duration-200 font-medium px-3 py-2 rounded-lg hover:bg-white hover:bg-opacity-10"
+              onClick={() => setIsOpen(false)}
+            >
+              🏪 Dashboard
+            </Link>
           )}
 
           {user?.userType === "ADMIN" && (

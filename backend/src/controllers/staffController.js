@@ -2,6 +2,7 @@ const crypto = require("crypto");
 const bcrypt = require("bcryptjs");
 const sgMail = require("@sendgrid/mail");
 const User = require("../models/User");
+const Restaurant = require("../models/Restaurant");
 const StaffInvite = require("../models/StaffInvite");
 const Order = require("../models/Order");
 const OrderStatusRequest = require("../models/OrderStatusRequest");
@@ -16,6 +17,15 @@ if (SENDGRID_API_KEY) {
 }
 
 const normalizeEmail = (email) => email.trim().toLowerCase();
+
+const resolveStaffRestaurant = async (staffUser) => {
+  if (!staffUser?.restaurantId) return null;
+
+  const byRestaurantId = await Restaurant.findById(staffUser.restaurantId);
+  if (byRestaurantId) return byRestaurantId;
+
+  return Restaurant.findOne({ ownerId: staffUser.restaurantId });
+};
 
 const ensureRestaurantOwner = (req, res) => {
   if (req.user.userType !== "RESTAURANT") {
@@ -245,6 +255,8 @@ exports.getStaffProfile = async (req, res) => {
       return res.status(403).json({ message: "Not a staff account" });
     }
 
+    const restaurant = await resolveStaffRestaurant(user);
+
     res.json({
       _id: user._id,
       username: user.username,
@@ -254,6 +266,16 @@ exports.getStaffProfile = async (req, res) => {
       profileImage: getImageData(user),
       staffRole: user.staffRole,
       restaurantId: user.restaurantId,
+      restaurant: restaurant
+        ? {
+            _id: restaurant._id,
+            title: restaurant.title,
+            address: restaurant.address,
+            phone: restaurant.phone,
+            cuisineType: restaurant.cuisineType,
+            description: restaurant.description,
+          }
+        : null,
       emailVerified: user.emailVerified,
       phoneVerified: user.phoneVerified,
       approval: user.approval,

@@ -1,9 +1,25 @@
 const Order = require("../models/Order");
 const Cart = require("../models/Cart");
 const OrderStatusRequest = require("../models/OrderStatusRequest");
+const Restaurant = require("../models/Restaurant");
 
-const resolveRestaurantId = (user) =>
-  user.userType === "STAFF" ? user.restaurantId : user._id;
+const resolveRestaurantId = async (user) => {
+  if (user.userType === "STAFF") {
+    if (!user.restaurantId) return null;
+
+    // Staff may store either Restaurant._id or owner User._id
+    const byRestaurantId = await Restaurant.findById(user.restaurantId).select("_id");
+    if (byRestaurantId) return byRestaurantId._id;
+
+    const byOwnerId = await Restaurant.findOne({ ownerId: user.restaurantId }).select("_id");
+    return byOwnerId?._id || null;
+  }
+
+  if (user.userType !== "RESTAURANT") return null;
+
+  const restaurant = await Restaurant.findOne({ ownerId: user._id }).select("_id");
+  return restaurant?._id || null;
+};
 
 const normalizeStatus = (status) => {
   if (!status) return status;
@@ -79,17 +95,19 @@ exports.getUserOrders = async (req, res) => {
 
 // RESTAURANT ORDERS
 exports.getRestaurantOrders = async (req, res) => {
-  const restaurantId = resolveRestaurantId(req.user);
+  const restaurantId = await resolveRestaurantId(req.user);
   if (!restaurantId) {
     return res.status(403).json({ message: "Restaurant context not available" });
   }
-  const orders = await Order.find({ restaurantId }).sort("-createdAt");
+  const orders = await Order.find({ restaurantId })
+    .populate("userId", "username email phone")
+    .sort("-createdAt");
   res.json(orders);
 };
 
 // UPDATE ORDER STATUS
 exports.updateOrderStatus = async (req, res) => {
-  const order = await Order.findById(req.params.id);
+  const order = await Order.findById(req.params.id).populate("userId", "username email phone");
   if (!order) {
     return res.status(404).json({ message: "Order not found" });
   }
@@ -97,13 +115,21 @@ exports.updateOrderStatus = async (req, res) => {
   const nextStatus = normalizeStatus(req.body.status);
 
   if (req.user.userType === "STAFF") {
-    if (!req.user.restaurantId || order.restaurantId.toString() !== req.user.restaurantId.toString()) {
+    const staffRestaurantId = await resolveRestaurantId(req.user);
+    if (!staffRestaurantId || order.restaurantId.toString() !== staffRestaurantId.toString()) {
       return res.status(403).json({ message: "Not allowed to update this order" });
     }
 
     const allowedStatuses = getStaffAllowedStatuses(req.user.staffRole);
     if (!allowedStatuses.includes(nextStatus)) {
       return res.status(403).json({ message: "Status change requires owner approval" });
+    }
+  }
+
+  if (req.user.userType === "RESTAURANT") {
+    const restaurantId = await resolveRestaurantId(req.user);
+    if (!restaurantId || order.restaurantId.toString() !== restaurantId.toString()) {
+      return res.status(403).json({ message: "Not allowed to update this order" });
     }
   }
 
@@ -124,11 +150,12 @@ exports.requestStatusChange = async (req, res) => {
     return res.status(404).json({ message: "Order not found" });
   }
 
-  if (!req.user.restaurantId) {
+  const staffRestaurantId = await resolveRestaurantId(req.user);
+  if (!staffRestaurantId) {
     return res.status(403).json({ message: "Restaurant context not available" });
   }
 
-  if (order.restaurantId.toString() !== req.user.restaurantId?.toString()) {
+  if (order.restaurantId.toString() !== staffRestaurantId.toString()) {
     return res.status(403).json({ message: "Not allowed to update this order" });
   }
 

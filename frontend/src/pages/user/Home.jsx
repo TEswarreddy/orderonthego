@@ -199,6 +199,40 @@ const Home = () => {
         </div>
       </div>
 
+      {/* Staff/Restaurant Quick Access Banner */}
+      {(user?.userType === "STAFF" || user?.userType === "RESTAURANT") && (
+        <div className="bg-blue-600 border-b-4 border-blue-700 shadow-lg">
+          <div className="container mx-auto px-4 py-4">
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center">
+                  <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                  </svg>
+                </div>
+                <div className="text-white">
+                  <p className="font-bold text-lg">
+                    {user?.userType === "STAFF" ? "Staff Member" : "Restaurant Owner"}
+                  </p>
+                  <p className="text-sm text-blue-100">
+                    Looking for your dashboard?
+                  </p>
+                </div>
+              </div>
+              <Link
+                to="/restaurant"
+                className="inline-flex items-center gap-2 bg-white text-blue-600 font-bold py-3 px-6 rounded-lg hover:bg-blue-50 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+                Go to Restaurant Dashboard
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="container mx-auto px-4 py-8">
         {/* Search Bar */}
         <div className="mb-6">

@@ -180,6 +180,44 @@ const StaffProfileTab = ({ user }) => {
         </div>
       </div>
 
+      {profile.restaurant && (
+        <div className="rounded-lg bg-white p-6 shadow">
+          <h3 className="text-lg font-semibold text-gray-900">Restaurant Details</h3>
+          <div className="mt-4 grid gap-4 sm:grid-cols-2">
+            <div className="rounded-lg border border-gray-200 p-4">
+              <p className="text-xs uppercase text-gray-500">Name</p>
+              <p className="mt-1 font-semibold text-gray-800">
+                {profile.restaurant.title || "Not available"}
+              </p>
+            </div>
+            <div className="rounded-lg border border-gray-200 p-4">
+              <p className="text-xs uppercase text-gray-500">Cuisine</p>
+              <p className="mt-1 font-semibold text-gray-800">
+                {profile.restaurant.cuisineType || "Not available"}
+              </p>
+            </div>
+            <div className="rounded-lg border border-gray-200 p-4">
+              <p className="text-xs uppercase text-gray-500">Phone</p>
+              <p className="mt-1 font-semibold text-gray-800">
+                {profile.restaurant.phone || "Not available"}
+              </p>
+            </div>
+            <div className="rounded-lg border border-gray-200 p-4">
+              <p className="text-xs uppercase text-gray-500">Address</p>
+              <p className="mt-1 font-semibold text-gray-800">
+                {profile.restaurant.address || "Not available"}
+              </p>
+            </div>
+            {profile.restaurant.description && (
+              <div className="rounded-lg border border-gray-200 p-4 sm:col-span-2">
+                <p className="text-xs uppercase text-gray-500">Description</p>
+                <p className="mt-1 text-gray-800">{profile.restaurant.description}</p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       {showVerificationModal && (
         <VerificationModal
           email={profile.email}

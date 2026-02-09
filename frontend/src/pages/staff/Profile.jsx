@@ -486,6 +486,46 @@ const StaffProfile = () => {
             </div>
           </div>
         </div>
+
+        {profile.restaurant && (
+          <div className="bg-white rounded-lg shadow-md p-6">
+            <h2 className="text-xl font-bold text-gray-900 mb-4">Restaurant Details</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="p-4 bg-gray-50 rounded-lg">
+                <p className="text-sm text-gray-600">Restaurant Name</p>
+                <p className="text-lg font-semibold text-gray-900">
+                  {profile.restaurant.title || "Not available"}
+                </p>
+              </div>
+              <div className="p-4 bg-gray-50 rounded-lg">
+                <p className="text-sm text-gray-600">Cuisine</p>
+                <p className="text-lg font-semibold text-gray-900">
+                  {profile.restaurant.cuisineType || "Not available"}
+                </p>
+              </div>
+              <div className="p-4 bg-gray-50 rounded-lg">
+                <p className="text-sm text-gray-600">Phone</p>
+                <p className="text-lg font-semibold text-gray-900">
+                  {profile.restaurant.phone || "Not available"}
+                </p>
+              </div>
+              <div className="p-4 bg-gray-50 rounded-lg">
+                <p className="text-sm text-gray-600">Address</p>
+                <p className="text-lg font-semibold text-gray-900">
+                  {profile.restaurant.address || "Not available"}
+                </p>
+              </div>
+              {profile.restaurant.description && (
+                <div className="p-4 bg-gray-50 rounded-lg md:col-span-2">
+                  <p className="text-sm text-gray-600">Description</p>
+                  <p className="text-lg text-gray-900">
+                    {profile.restaurant.description}
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
       </div>
 
       {showVerificationModal && (

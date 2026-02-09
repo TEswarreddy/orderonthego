@@ -40,6 +40,7 @@ const RestaurantDashboard = () => {
     averageRating: 0,
   });
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [activeTab, setActiveTab] = useState("items");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [showAddForm, setShowAddForm] = useState(false);
@@ -58,6 +59,7 @@ const RestaurantDashboard = () => {
   const [orderSearch, setOrderSearch] = useState("");
   const [orderFilter, setOrderFilter] = useState("all");
   const [restaurantProfile, setRestaurantProfile] = useState(null);
+  const [lastOrderCount, setLastOrderCount] = useState(0);
   const [newFood, setNewFood] = useState({
     title: "",
     price: "",
@@ -73,6 +75,22 @@ const RestaurantDashboard = () => {
     if (user?.userType === "STAFF") {
       setActiveTab("orders");
     }
+  }, [user]);
+
+  // Auto-refresh orders every 30 seconds
+  useEffect(() => {
+    if (!user) return;
+    
+    // Request notification permission
+    if ("Notification" in window && Notification.permission === "default") {
+      Notification.requestPermission();
+    }
+    
+    const intervalId = setInterval(() => {
+      fetchOrdersOnly();
+    }, 30000); // 30 seconds
+
+    return () => clearInterval(intervalId);
   }, [user]);
 
   const allStatusOptions = [
@@ -136,6 +154,7 @@ const RestaurantDashboard = () => {
       });
 
       setOrders(restaurantOrders);
+      setLastOrderCount(restaurantOrders.length);
 
       if (user?.userType === "RESTAURANT") {
         // Fetch subscription usage and plans
@@ -172,6 +191,47 @@ const RestaurantDashboard = () => {
       console.error("Failed to fetch restaurant data:", err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchOrdersOnly = async () => {
+    try {
+      setRefreshing(true);
+      const ordersRes = await axios.get("/orders/restaurant");
+      const restaurantOrders = ordersRes.data || [];
+
+      const totalRevenue = restaurantOrders.reduce((sum, order) => sum + (order.totalAmount || 0), 0);
+
+      setStats(prev => ({
+        ...prev,
+        activeOrders: restaurantOrders.filter((o) => o.status?.toLowerCase() !== "delivered").length,
+        totalRevenue,
+      }));
+
+      // Check for new orders
+      if (lastOrderCount > 0 && restaurantOrders.length > lastOrderCount) {
+        const newOrdersCount = restaurantOrders.length - lastOrderCount;
+        // Show browser notification if permission granted
+        if ("Notification" in window && Notification.permission === "granted") {
+          new Notification("New Order Received!", {
+            body: `You have ${newOrdersCount} new order${newOrdersCount > 1 ? 's' : ''}`,
+            icon: "/favicon.ico",
+          });
+        }
+        // Play a subtle audio notification
+        try {
+          const audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBSuBzvLaiTYIGWi77eeaTRAMUKfj8LZjHAY4ktfyzHksBSR3x/DdkEAKFF606+uoVRQKRp/g8r5sIQU=');
+          audio.volume = 0.3;
+          audio.play().catch(() => {});
+        } catch (e) {}
+      }
+
+      setLastOrderCount(restaurantOrders.length);
+      setOrders(restaurantOrders);
+    } catch (err) {
+      console.error("Failed to refresh orders:", err);
+    } finally {
+      setRefreshing(false);
     }
   };
 
@@ -437,7 +497,18 @@ const RestaurantDashboard = () => {
             <div className="max-w-7xl mx-auto">
               <h1 className="text-4xl font-bold text-gray-900 mb-2">Restaurant Dashboard</h1>
               <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
-                <p className="text-gray-600">Manage your menu and orders</p>
+                <div className="flex items-center gap-3">
+                  <p className="text-gray-600">Manage your menu and orders</p>
+                  {refreshing && (
+                    <span className="flex items-center gap-2 text-sm text-blue-600 bg-blue-50 px-3 py-1 rounded-full">
+                      <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Checking for new orders...
+                    </span>
+                  )}
+                </div>
                 {user?.userType === "STAFF" && (
                   <button
                     onClick={() => setActiveTab("profile")}
@@ -630,6 +701,8 @@ const RestaurantDashboard = () => {
             getAllowedStatusOptions={getAllowedStatusOptions}
             getDisplayStatusOptions={getDisplayStatusOptions}
             handleOrderStatusChange={handleOrderStatusChange}
+            onRefresh={fetchOrdersOnly}
+            refreshing={refreshing}
           />
         )}
 

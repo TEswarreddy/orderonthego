@@ -79,7 +79,17 @@ const Navbar = () => {
           {user && (
             <div className="flex items-center gap-3">
               <Link
-                to="/profile"
+                to={
+                  user.userType === "USER"
+                    ? "/profile"
+                    : user.userType === "RESTAURANT"
+                    ? "/restaurant/profile"
+                    : user.userType === "STAFF"
+                    ? "/staff/profile"
+                    : user.userType === "ADMIN"
+                    ? "/admin/profile"
+                    : "/profile"
+                }
                 className="text-sm text-yellow-200 hover:text-white transition-colors duration-200 font-medium px-3 py-2 rounded-lg hover:bg-white hover:bg-opacity-10"
               >
                 👤 {user.username || user.name || "Profile"}
@@ -172,7 +182,17 @@ const Navbar = () => {
           {user && (
             <div className="flex flex-col gap-2">
               <Link
-                to="/profile"
+                to={
+                  user.userType === "USER"
+                    ? "/profile"
+                    : user.userType === "RESTAURANT"
+                    ? "/restaurant/profile"
+                    : user.userType === "STAFF"
+                    ? "/staff/profile"
+                    : user.userType === "ADMIN"
+                    ? "/admin/profile"
+                    : "/profile"
+                }
                 className="text-sm text-yellow-200 hover:text-white transition-colors duration-200 font-medium px-3 py-2 rounded-lg hover:bg-white hover:bg-opacity-10 text-left"
                 onClick={() => setIsOpen(false)}
               >

@@ -13,7 +13,15 @@ const restaurantSchema = new mongoose.Schema(
     cuisineType: { type: String },
     description: { type: String },
     mainImg: String,
+    profileImage: { type: String },
+    profileImageBuffer: { type: Buffer },
+    profileImageMimeType: { type: String },
     menu: Array,
+    status: {
+      type: String,
+      enum: ["pending", "approved"],
+      default: "pending",
+    },
   },
   { timestamps: true }
 );

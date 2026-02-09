@@ -13,12 +13,22 @@ const {
   deleteOrder,
   getRevenueAnalytics,
   getOrderDistribution,
+  getAdminProfile,
+  updateAdminProfile,
+  uploadAdminProfileImage,
+  deleteAdminProfileImage,
 } = require("../controllers/adminController");
 
 const { protect, authorize } = require("../middlewares/authMiddleware");
 
 // Middleware to protect admin routes
 const adminProtect = [protect, authorize("ADMIN")];
+
+// Admin Profile endpoints
+router.get("/profile", protect, authorize("ADMIN"), getAdminProfile);
+router.put("/profile", protect, authorize("ADMIN"), updateAdminProfile);
+router.post("/profile/image", protect, authorize("ADMIN"), uploadProfileImageMiddleware, uploadAdminProfileImage);
+router.delete("/profile/image", protect, authorize("ADMIN"), deleteAdminProfileImage);
 
 // Dashboard Stats
 router.get("/stats", adminProtect, getDashboardStats);
@@ -41,5 +51,44 @@ router.delete("/orders/:id", adminProtect, deleteOrder);
 // Analytics
 router.get("/analytics/revenue", adminProtect, getRevenueAnalytics);
 router.get("/analytics/orders-distribution", adminProtect, getOrderDistribution);
+
+// Middleware to handle image upload
+function uploadProfileImageMiddleware(req, res, next) {
+  const chunks = [];
+  let contentType = req.get('content-type');
+  
+  if (!contentType || !contentType.startsWith('image/')) {
+    return res.status(400).json({ message: "Invalid content type. Expected image" });
+  }
+
+  req.on('data', chunk => {
+    chunks.push(chunk);
+  });
+
+  req.on('end', () => {
+    const buffer = Buffer.concat(chunks);
+    
+    if (buffer.length === 0) {
+      return res.status(400).json({ message: "No image data provided" });
+    }
+
+    const maxSize = 5 * 1024 * 1024;
+    if (buffer.length > maxSize) {
+      return res.status(400).json({ message: "File size must be less than 5MB" });
+    }
+
+    req.file = {
+      buffer: buffer,
+      mimetype: contentType,
+      size: buffer.length
+    };
+
+    next();
+  });
+
+  req.on('error', (error) => {
+    res.status(500).json({ message: "Error reading image data", error: error.message });
+  });
+}
 
 module.exports = router;

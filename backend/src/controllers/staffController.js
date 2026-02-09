@@ -232,3 +232,132 @@ exports.rejectStatusRequest = async (req, res) => {
 
   res.json({ message: "Status change rejected" });
 };
+
+// GET STAFF PROFILE
+const { getImageData } = require("../utils/uploadHandler");
+
+exports.getStaffProfile = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const user = await User.findById(userId).select("-password");
+
+    if (!user || user.userType !== "STAFF") {
+      return res.status(403).json({ message: "Not a staff account" });
+    }
+
+    res.json({
+      _id: user._id,
+      username: user.username,
+      email: user.email,
+      phone: user.phone,
+      address: user.address,
+      profileImage: getImageData(user),
+      staffRole: user.staffRole,
+      restaurantId: user.restaurantId,
+      emailVerified: user.emailVerified,
+      phoneVerified: user.phoneVerified,
+      approval: user.approval,
+      status: user.status,
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt,
+    });
+  } catch (error) {
+    res.status(500).json({ message: "Error fetching staff profile", error: error.message });
+  }
+};
+
+// UPDATE STAFF PROFILE
+exports.updateStaffProfile = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const { username, phone, address } = req.body;
+
+    const user = await User.findByIdAndUpdate(
+      userId,
+      { username, phone, address },
+      { new: true }
+    ).select("-password");
+
+    if (!user) {
+      return res.status(404).json({ message: "Staff member not found" });
+    }
+
+    res.json({
+      message: "Staff profile updated successfully",
+      user: {
+        _id: user._id,
+        username: user.username,
+        email: user.email,
+        phone: user.phone,
+        address: user.address,
+        profileImage: getImageData(user),
+        staffRole: user.staffRole,
+        emailVerified: user.emailVerified,
+        phoneVerified: user.phoneVerified,
+      },
+    });
+  } catch (error) {
+    res.status(500).json({ message: "Error updating staff profile", error: error.message });
+  }
+};
+
+// UPLOAD STAFF PROFILE IMAGE
+exports.uploadStaffProfileImage = async (req, res) => {
+  try {
+    const userId = req.user._id;
+
+    if (!req.file) {
+      return res.status(400).json({ message: "No image file provided" });
+    }
+
+    const allowedMimes = ["image/jpeg", "image/png", "image/gif", "image/webp"];
+    if (!allowedMimes.includes(req.file.mimetype)) {
+      return res.status(400).json({ message: "Invalid file type. Only images are allowed" });
+    }
+
+    const maxSize = 5 * 1024 * 1024;
+    if (req.file.size > maxSize) {
+      return res.status(400).json({ message: "File size must be less than 5MB" });
+    }
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: "Staff member not found" });
+    }
+
+    user.profileImageBuffer = req.file.buffer;
+    user.profileImageMimeType = req.file.mimetype;
+    user.profileImage = `staff_${userId}_${Date.now()}`;
+
+    await user.save();
+
+    res.json({
+      message: "Staff profile image uploaded successfully",
+      profileImage: getImageData(user),
+    });
+  } catch (error) {
+    res.status(500).json({ message: "Error uploading image", error: error.message });
+  }
+};
+
+// DELETE STAFF PROFILE IMAGE
+exports.deleteStaffProfileImage = async (req, res) => {
+  try {
+    const userId = req.user._id;
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: "Staff member not found" });
+    }
+
+    user.profileImage = null;
+    user.profileImageBuffer = null;
+    user.profileImageMimeType = null;
+
+    await user.save();
+
+    res.json({ message: "Staff profile image deleted successfully" });
+  } catch (error) {
+    res.status(500).json({ message: "Error deleting image", error: error.message });
+  }
+};

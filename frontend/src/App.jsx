@@ -11,7 +11,10 @@ import FoodDetail from "./pages/user/FoodDetail";
 import Cart from "./pages/user/Cart";
 import Orders from "./pages/user/Orders";
 import Payment from "./pages/user/Payment";
-import Profile from "./pages/user/Profile";
+import UserProfile from "./pages/user/Profile";
+import RestaurantProfile from "./pages/restaurant/Profile";
+import StaffProfile from "./pages/staff/Profile";
+import AdminProfile from "./pages/admin/Profile";
 import AdminDashboard from "./pages/admin/Dashboard";
 import RestaurantDashboard from "./pages/restaurant/Dashboard";
 import SubscriptionPlans from "./pages/restaurant/SubscriptionPlans";
@@ -70,8 +73,8 @@ function App() {
           <Route
             path="/profile"
             element={
-              <ProtectedRoute role={["USER", "RESTAURANT", "STAFF", "ADMIN"]}>
-                <Profile />
+              <ProtectedRoute role="USER">
+                <UserProfile />
               </ProtectedRoute>
             }
           />
@@ -94,6 +97,24 @@ function App() {
             }
           />
 
+          <Route
+            path="/restaurant/profile"
+            element={
+              <ProtectedRoute role="RESTAURANT">
+                <RestaurantProfile />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/staff/profile"
+            element={
+              <ProtectedRoute role="STAFF">
+                <StaffProfile />
+              </ProtectedRoute>
+            }
+          />
+
           <Route path="/subscriptions" element={<SubscriptionPlans />} />
 
           <Route
@@ -104,6 +125,16 @@ function App() {
               </ProtectedRoute>
             }
           />
+
+          <Route
+            path="/admin/profile"
+            element={
+              <ProtectedRoute role="ADMIN">
+                <AdminProfile />
+              </ProtectedRoute>
+            }
+          />
+
           <Route path="/staff-invite/:token" element={<StaffInvite />} />
         </Routes>
           </main>

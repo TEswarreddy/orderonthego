@@ -12,6 +12,7 @@ const reviewRoutes = require("./routes/reviewRoutes");
 const subscriptionRoutes = require("./routes/subscriptionRoutes");
 const staffRoutes = require("./routes/staffRoutes");
 const verificationRoutes = require("./routes/verificationRoutes");
+const restaurantRoutes = require("./routes/restaurantRoutes");
 
 const app = express();
 
@@ -28,6 +29,7 @@ app.use("/api/reviews", reviewRoutes);
 app.use("/api/subscriptions", subscriptionRoutes);
 app.use("/api/staff", staffRoutes);
 app.use("/api/verification", verificationRoutes);
+app.use("/api/restaurants", restaurantRoutes);
 
 app.get("/", (req, res) => {
   res.send("SB Foods API is running 🚀");

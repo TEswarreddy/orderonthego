@@ -1,5 +1,6 @@
 const User = require("../models/User");
 const Order = require("../models/Order");
+const Restaurant = require("../models/Restaurant");
 
 // GET DASHBOARD STATISTICS
 exports.getDashboardStats = async (req, res) => {
@@ -141,15 +142,17 @@ exports.deleteUser = async (req, res) => {
 // APPROVE RESTAURANT
 exports.approveRestaurant = async (req, res) => {
   try {
-    const restaurant = await User.findById(req.params.id);
-    if (!restaurant || restaurant.userType !== "RESTAURANT") {
+    const restaurant = await Restaurant.findByIdAndUpdate(
+      req.params.id,
+      { status: "approved" },
+      { new: true }
+    ).populate("ownerId", "username email");
+
+    if (!restaurant) {
       return res.status(404).json({ message: "Restaurant not found" });
     }
 
-    restaurant.approval = true;
-    await restaurant.save();
-
-    res.json({ message: "Restaurant approved successfully" });
+    res.json({ message: "Restaurant approved successfully", restaurant });
   } catch (error) {
     res
       .status(500)
@@ -343,5 +346,132 @@ exports.getOrderDistribution = async (req, res) => {
         message: "Failed to fetch order distribution",
         error: error.message,
       });
+  }
+};
+
+// GET ADMIN PROFILE
+const { getImageData } = require("../utils/uploadHandler");
+
+exports.getAdminProfile = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const user = await User.findById(userId).select("-password");
+
+    if (!user || user.userType !== "ADMIN") {
+      return res.status(403).json({ message: "Not an admin account" });
+    }
+
+    res.json({
+      _id: user._id,
+      username: user.username,
+      email: user.email,
+      phone: user.phone,
+      address: user.address,
+      profileImage: getImageData(user),
+      userType: user.userType,
+      emailVerified: user.emailVerified,
+      phoneVerified: user.phoneVerified,
+      status: user.status,
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt,
+    });
+  } catch (error) {
+    res.status(500).json({ message: "Error fetching admin profile", error: error.message });
+  }
+};
+
+// UPDATE ADMIN PROFILE
+exports.updateAdminProfile = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const { username, phone, address } = req.body;
+
+    const user = await User.findByIdAndUpdate(
+      userId,
+      { username, phone, address },
+      { new: true }
+    ).select("-password");
+
+    if (!user) {
+      return res.status(404).json({ message: "Admin not found" });
+    }
+
+    res.json({
+      message: "Admin profile updated successfully",
+      user: {
+        _id: user._id,
+        username: user.username,
+        email: user.email,
+        phone: user.phone,
+        address: user.address,
+        profileImage: getImageData(user),
+        userType: user.userType,
+        emailVerified: user.emailVerified,
+        phoneVerified: user.phoneVerified,
+      },
+    });
+  } catch (error) {
+    res.status(500).json({ message: "Error updating admin profile", error: error.message });
+  }
+};
+
+// UPLOAD ADMIN PROFILE IMAGE
+exports.uploadAdminProfileImage = async (req, res) => {
+  try {
+    const userId = req.user._id;
+
+    if (!req.file) {
+      return res.status(400).json({ message: "No image file provided" });
+    }
+
+    const allowedMimes = ["image/jpeg", "image/png", "image/gif", "image/webp"];
+    if (!allowedMimes.includes(req.file.mimetype)) {
+      return res.status(400).json({ message: "Invalid file type. Only images are allowed" });
+    }
+
+    const maxSize = 5 * 1024 * 1024;
+    if (req.file.size > maxSize) {
+      return res.status(400).json({ message: "File size must be less than 5MB" });
+    }
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: "Admin not found" });
+    }
+
+    user.profileImageBuffer = req.file.buffer;
+    user.profileImageMimeType = req.file.mimetype;
+    user.profileImage = `admin_${userId}_${Date.now()}`;
+
+    await user.save();
+
+    res.json({
+      message: "Admin profile image uploaded successfully",
+      profileImage: getImageData(user),
+    });
+  } catch (error) {
+    res.status(500).json({ message: "Error uploading image", error: error.message });
+  }
+};
+
+// DELETE ADMIN PROFILE IMAGE
+exports.deleteAdminProfileImage = async (req, res) => {
+  try {
+    const userId = req.user._id;
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: "Admin not found" });
+    }
+
+    user.profileImage = null;
+    user.profileImageBuffer = null;
+    user.profileImageMimeType = null;
+
+    await user.save();
+
+    res.json({ message: "Admin profile image deleted successfully" });
+  } catch (error) {
+    res.status(500).json({ message: "Error deleting image", error: error.message });
   }
 };

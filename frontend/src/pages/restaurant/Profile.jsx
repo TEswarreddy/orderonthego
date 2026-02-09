@@ -39,7 +39,7 @@ const RestaurantProfile = () => {
       setLoading(true);
       const token = localStorage.getItem("token");
       const response = await axios.get(
-        "http://localhost:5000/api/restaurant/profile",
+        "http://localhost:5000/api/restaurants/profile",
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -99,8 +99,8 @@ const RestaurantProfile = () => {
 
       const endpoint =
         imageType === "restaurant"
-          ? "http://localhost:5000/api/restaurant/profile/image"
-          : "http://localhost:5000/api/restaurant/profile/user-image";
+          ? "http://localhost:5000/api/restaurants/profile/image"
+          : "http://localhost:5000/api/restaurants/profile/user-image";
 
       const response = await axios.post(endpoint, file, {
         headers: {
@@ -152,8 +152,8 @@ const RestaurantProfile = () => {
 
       const endpoint =
         imageType === "restaurant"
-          ? "http://localhost:5000/api/restaurant/profile/image"
-          : "http://localhost:5000/api/restaurant/profile/user-image";
+          ? "http://localhost:5000/api/restaurants/profile/image"
+          : "http://localhost:5000/api/restaurants/profile/user-image";
 
       await axios.delete(endpoint, {
         headers: {
@@ -197,7 +197,7 @@ const RestaurantProfile = () => {
     try {
       const token = localStorage.getItem("token");
       const response = await axios.put(
-        "http://localhost:5000/api/restaurant/profile",
+        "http://localhost:5000/api/restaurants/profile",
         formData,
         {
           headers: {

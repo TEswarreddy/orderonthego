@@ -1,6 +1,7 @@
 const Subscription = require("../models/Subscription");
 const Food = require("../models/Food");
 const Order = require("../models/Order");
+const Restaurant = require("../models/Restaurant");
 const crypto = require("crypto");
 
 const ensureRestaurantSubscription = async (restaurantId) => {
@@ -222,15 +223,21 @@ const checkFeatureLimit = async (req, res) => {
       return res.status(403).json({ message: "No active subscription found" });
     }
 
+    // Find the restaurant to get the correct restaurantId
+    const restaurant = await Restaurant.findOne({ ownerId: req.user._id });
+    if (!restaurant) {
+      return res.status(404).json({ message: "Restaurant not found" });
+    }
+
     let currentUsage = 0;
 
     if (featureName === "maxMenuItems") {
-      currentUsage = await Food.countDocuments({ restaurantId: req.user._id });
+      currentUsage = await Food.countDocuments({ restaurantId: restaurant._id });
     } else if (featureName === "maxOrdersPerDay") {
       const today = new Date();
       today.setHours(0, 0, 0, 0);
       currentUsage = await Order.countDocuments({
-        restaurantId: req.user._id,
+        restaurantId: restaurant._id,
         createdAt: { $gte: today },
       });
     }
@@ -257,12 +264,18 @@ const getUsageStats = async (req, res) => {
   try {
     const subscription = await ensureRestaurantSubscription(req.user._id);
 
-    const totalMenuItems = await Food.countDocuments({ restaurantId: req.user._id });
+    // Find the restaurant to get the correct restaurantId
+    const restaurant = await Restaurant.findOne({ ownerId: req.user._id });
+    if (!restaurant) {
+      return res.status(404).json({ message: "Restaurant not found" });
+    }
+
+    const totalMenuItems = await Food.countDocuments({ restaurantId: restaurant._id });
 
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const todayOrders = await Order.countDocuments({
-      restaurantId: req.user._id,
+      restaurantId: restaurant._id,
       createdAt: { $gte: today },
     });
 

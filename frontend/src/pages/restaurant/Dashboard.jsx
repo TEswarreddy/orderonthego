@@ -59,7 +59,7 @@ const RestaurantDashboard = () => {
     title: "",
     price: "",
     description: "",
-    category: "pizza",
+    category: "biryani",
   });
 
   useEffect(() => {
@@ -207,10 +207,10 @@ const RestaurantDashboard = () => {
       const res = await axios.post("/foods", {
         ...newFood,
         price: parseFloat(newFood.price),
-        restaurantId: user._id,
       });
       setFoods([...foods, res.data]);
-      setNewFood({ title: "", price: "", description: "", category: "pizza" });
+      setStats(prev => ({ ...prev, totalItems: prev.totalItems + 1 }));
+      setNewFood({ title: "", price: "", description: "", category: "biryani" });
       setShowAddForm(false);
       alert("✅ Food item added successfully!");
       fetchRestaurantData(); // Refresh to update subscription usage
@@ -225,6 +225,7 @@ const RestaurantDashboard = () => {
         await axios.delete(`/foods/${foodId}`);
         setFoods(foods.filter((f) => f._id !== foodId));
         alert("✅ Food item deleted");
+        fetchRestaurantData(); // Refresh to update subscription usage and stats
       } catch (err) {
         alert("❌ Failed to delete item");
       }
@@ -256,7 +257,7 @@ const RestaurantDashboard = () => {
       setFoods(foods.map((f) => (f._id === editingFood._id ? res.data : f)));
       setEditingFood(null);
       setShowEditForm(false);
-      setNewFood({ title: "", price: "", description: "", category: "pizza" });
+      setNewFood({ title: "", price: "", description: "", category: "biryani" });
       alert("✅ Food item updated successfully!");
       fetchRestaurantData();
     } catch (err) {

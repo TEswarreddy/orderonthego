@@ -58,6 +58,19 @@ const MenuItemsTab = ({
             onChange={(e) => setNewFood({ ...newFood, category: e.target.value })}
             className="bg-white text-gray-900 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
           >
+            <option value="biryani">Biryani</option>
+            <option value="curry">Curry</option>
+            <option value="tandoori">Tandoori</option>
+            <option value="dosa">Dosa</option>
+            <option value="samosa">Samosa</option>
+            <option value="paneer">Paneer Dishes</option>
+            <option value="dal">Dal</option>
+            <option value="naan">Naan/Roti</option>
+            <option value="paratha">Paratha</option>
+            <option value="chaat">Chaat</option>
+            <option value="indian-sweets">Indian Sweets</option>
+            <option value="thali">Thali</option>
+            <option value="rice">Rice Dishes</option>
             <option value="pizza">Pizza</option>
             <option value="sushi">Sushi</option>
             <option value="burger">Burger</option>
@@ -117,6 +130,19 @@ const MenuItemsTab = ({
             onChange={(e) => setNewFood({ ...newFood, category: e.target.value })}
             className="bg-white text-gray-900 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
           >
+            <option value="biryani">Biryani</option>
+            <option value="curry">Curry</option>
+            <option value="tandoori">Tandoori</option>
+            <option value="dosa">Dosa</option>
+            <option value="samosa">Samosa</option>
+            <option value="paneer">Paneer Dishes</option>
+            <option value="dal">Dal</option>
+            <option value="naan">Naan/Roti</option>
+            <option value="paratha">Paratha</option>
+            <option value="chaat">Chaat</option>
+            <option value="indian-sweets">Indian Sweets</option>
+            <option value="thali">Thali</option>
+            <option value="rice">Rice Dishes</option>
             <option value="pizza">Pizza</option>
             <option value="sushi">Sushi</option>
             <option value="burger">Burger</option>
@@ -144,7 +170,7 @@ const MenuItemsTab = ({
             onClick={() => {
               setShowEditForm(false);
               setEditingFood(null);
-              setNewFood({ title: "", price: "", description: "", category: "pizza" });
+              setNewFood({ title: "", price: "", description: "", category: "biryani" });
             }}
             className="bg-gray-400 hover:bg-gray-500 text-white px-6 py-2 rounded-lg transition font-semibold"
           >
@@ -170,6 +196,19 @@ const MenuItemsTab = ({
           className="bg-white text-gray-900 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
         >
           <option value="all">All Categories</option>
+          <option value="biryani">Biryani</option>
+          <option value="curry">Curry</option>
+          <option value="tandoori">Tandoori</option>
+          <option value="dosa">Dosa</option>
+          <option value="samosa">Samosa</option>
+          <option value="paneer">Paneer Dishes</option>
+          <option value="dal">Dal</option>
+          <option value="naan">Naan/Roti</option>
+          <option value="paratha">Paratha</option>
+          <option value="chaat">Chaat</option>
+          <option value="indian-sweets">Indian Sweets</option>
+          <option value="thali">Thali</option>
+          <option value="rice">Rice Dishes</option>
           <option value="pizza">Pizza</option>
           <option value="sushi">Sushi</option>
           <option value="burger">Burger</option>

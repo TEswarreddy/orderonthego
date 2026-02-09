@@ -1,6 +1,6 @@
 import { useState, useEffect, useContext } from "react";
 import { AuthContext } from "../../context/AuthContext";
-import axios from "axios";
+import axios from "../../api/axios";
 import { useNavigate } from "react-router-dom";
 import LoadingSpinner from "../../components/LoadingSpinner";
 import { Upload, Trash2 } from "lucide-react";
@@ -32,15 +32,7 @@ const Profile = () => {
   const fetchProfile = async () => {
     try {
       setLoading(true);
-      const token = localStorage.getItem("token");
-      const response = await axios.get(
-        "http://localhost:5000/api/auth/profile",
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      const response = await axios.get("/auth/profile");
 
       setProfile(response.data);
       setFormData({
@@ -87,14 +79,11 @@ const Profile = () => {
 
     try {
       setImageLoading(true);
-      const token = localStorage.getItem("token");
-      
       const response = await axios.post(
-        "http://localhost:5000/api/auth/profile/image",
+        "/auth/profile/image",
         file,
         {
           headers: {
-            Authorization: `Bearer ${token}`,
             "Content-Type": file.type,
           },
         }
@@ -163,16 +152,7 @@ const Profile = () => {
   const handleEditSubmit = async (e) => {
     e.preventDefault();
     try {
-      const token = localStorage.getItem("token");
-      const response = await axios.put(
-        "http://localhost:5000/api/auth/profile",
-        formData,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      const response = await axios.put("/auth/profile", formData);
 
       setProfile(response.data.user);
       const updatedUser = { ...user, ...response.data.user };

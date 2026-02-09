@@ -1,6 +1,6 @@
 import { useState, useEffect, useContext } from "react";
 import { AuthContext } from "../../context/AuthContext";
-import axios from "axios";
+import axios from "../../api/axios";
 import { useNavigate } from "react-router-dom";
 import LoadingSpinner from "../../components/LoadingSpinner";
 import { Upload, Trash2 } from "lucide-react";
@@ -37,15 +37,7 @@ const RestaurantProfile = () => {
   const fetchProfile = async () => {
     try {
       setLoading(true);
-      const token = localStorage.getItem("token");
-      const response = await axios.get(
-        "http://localhost:5000/api/restaurants/profile",
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      const response = await axios.get("/restaurants/profile");
 
       setProfile(response.data);
       setFormData({
@@ -95,16 +87,14 @@ const RestaurantProfile = () => {
 
     try {
       setImageLoading(true);
-      const token = localStorage.getItem("token");
 
       const endpoint =
         imageType === "restaurant"
-          ? "http://localhost:5000/api/restaurants/profile/image"
-          : "http://localhost:5000/api/restaurants/profile/user-image";
+          ? "/restaurants/profile/image"
+          : "/restaurants/profile/user-image";
 
       const response = await axios.post(endpoint, file, {
         headers: {
-          Authorization: `Bearer ${token}`,
           "Content-Type": file.type,
         },
       });
@@ -148,18 +138,13 @@ const RestaurantProfile = () => {
 
     try {
       setImageLoading(true);
-      const token = localStorage.getItem("token");
 
       const endpoint =
         imageType === "restaurant"
-          ? "http://localhost:5000/api/restaurants/profile/image"
-          : "http://localhost:5000/api/restaurants/profile/user-image";
+          ? "/restaurants/profile/image"
+          : "/restaurants/profile/user-image";
 
-      await axios.delete(endpoint, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      await axios.delete(endpoint);
 
       if (imageType === "restaurant") {
         setProfile((prev) => ({
@@ -195,16 +180,7 @@ const RestaurantProfile = () => {
   const handleEditSubmit = async (e) => {
     e.preventDefault();
     try {
-      const token = localStorage.getItem("token");
-      const response = await axios.put(
-        "http://localhost:5000/api/restaurants/profile",
-        formData,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      const response = await axios.put("/restaurants/profile", formData);
 
       setProfile(response.data);
       setIsEditing(false);

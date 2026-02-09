@@ -1,6 +1,6 @@
 import { useState, useEffect, useContext } from "react";
 import { AuthContext } from "../../context/AuthContext";
-import axios from "axios";
+import axios from "../../api/axios";
 import { useNavigate } from "react-router-dom";
 import LoadingSpinner from "../../components/LoadingSpinner";
 import { Upload, Trash2 } from "lucide-react";
@@ -32,15 +32,7 @@ const AdminProfile = () => {
   const fetchProfile = async () => {
     try {
       setLoading(true);
-      const token = localStorage.getItem("token");
-      const response = await axios.get(
-        "http://localhost:5000/api/admin/profile",
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      const response = await axios.get("/admin/profile");
 
       setProfile(response.data);
       setFormData({
@@ -85,14 +77,12 @@ const AdminProfile = () => {
 
     try {
       setImageLoading(true);
-      const token = localStorage.getItem("token");
 
       const response = await axios.post(
-        "http://localhost:5000/api/admin/profile/image",
+        "/admin/profile/image",
         file,
         {
           headers: {
-            Authorization: `Bearer ${token}`,
             "Content-Type": file.type,
           },
         }
@@ -125,15 +115,9 @@ const AdminProfile = () => {
 
     try {
       setImageLoading(true);
-      const token = localStorage.getItem("token");
 
       await axios.delete(
-        "http://localhost:5000/api/admin/profile/image",
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
+        "/admin/profile/image"
       );
 
       setProfile((prev) => ({
@@ -160,16 +144,7 @@ const AdminProfile = () => {
   const handleEditSubmit = async (e) => {
     e.preventDefault();
     try {
-      const token = localStorage.getItem("token");
-      const response = await axios.put(
-        "http://localhost:5000/api/admin/profile",
-        formData,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      const response = await axios.put("/admin/profile", formData);
 
       setProfile((prev) => ({
         ...prev,

@@ -225,6 +225,14 @@ Verify that `frontend/src/api/axios.js` points to your backend:
 const API_BASE_URL = 'http://localhost:5000/api';
 ```
 
+Alternatively, define a frontend environment variable in `frontend/.env`:
+
+```env
+VITE_API_URL=http://localhost:5000/api
+```
+
+Restart the frontend dev server after changing `.env`.
+
 ---
 
 ## Database Configuration

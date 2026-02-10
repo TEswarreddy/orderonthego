@@ -98,6 +98,9 @@ The system is role-based with access controls for each role:
 - **Order Queue**: Restaurant and staff view all incoming orders.
 - **Update Status**: Update order status through each stage.
 
+### Status Flow
+- `PLACED` -> `PENDING` -> `CONFIRMED` -> `PREPARING` -> `READY` -> `OUT_FOR_DELIVERY` -> `DELIVERED`
+
 ### Staff Workflow
 - **Status Change Requests**: Staff can request a status change, subject to owner approval.
 
@@ -137,7 +140,7 @@ The system is role-based with access controls for each role:
 ## Subscription Plans & Limits
 
 ### Key Features
-- **Subscription Plans**: Tiered plans with different limits.
+- **Subscription Plans**: Tiered plans (FREE, BASIC, PREMIUM) with different limits.
 - **Subscribe / Cancel**: Restaurant owners can manage subscriptions.
 - **Usage Tracking**: Track usage of menu items and staff capacity.
 - **Limit Checks**: API enforces feature limits by plan.

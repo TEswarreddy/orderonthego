@@ -80,6 +80,14 @@ Full-stack implementation of a comprehensive admin dashboard for Order On The Go
 
 ## 🔌 API Endpoints
 
+### Profile
+```
+GET    /admin/profile
+PUT    /admin/profile
+POST   /admin/profile/image
+DELETE /admin/profile/image
+```
+
 ### Dashboard
 ```
 GET /admin/stats
@@ -93,6 +101,13 @@ PUT    /admin/users/:id/status
 DELETE /admin/users/:id
 ```
 
+### Restaurants
+```
+PUT /admin/approve-restaurant/:id
+PUT /admin/restaurants/:id
+GET /admin/restaurants/:id/staff
+```
+
 ### Orders
 ```
 GET    /admin/orders?page=1&limit=10&status=all&search=
@@ -101,15 +116,31 @@ PUT    /admin/orders/:id/status
 DELETE /admin/orders/:id
 ```
 
+### Foods
+```
+GET    /admin/foods
+POST   /admin/foods
+PUT    /admin/foods/:id
+DELETE /admin/foods/:id
+```
+
+### Staff
+```
+GET  /admin/staff
+POST /admin/staff
+PUT  /admin/staff/:id
+DELETE /admin/staff/:id
+POST /admin/staff/:id/reset-password
+```
+
 ### Analytics
 ```
 GET /admin/analytics/revenue
 GET /admin/analytics/orders-distribution
-```
-
-### Restaurant Management
-```
-PUT /admin/approve-restaurant/:id
+GET /admin/analytics/revenue/food
+GET /admin/analytics/revenue/subscriptions
+GET /admin/analytics/revenue/by-restaurant
+GET /admin/analytics/revenue/stats
 ```
 
 ## 🔐 Security
@@ -143,7 +174,7 @@ PUT /admin/approve-restaurant/:id
   items: Array,
   address: String,
   totalAmount: Number,
-  status: "PLACED" | "PREPARING" | "OUT_FOR_DELIVERY" | "DELIVERED",
+  status: "PLACED" | "PENDING" | "CONFIRMED" | "PREPARING" | "READY" | "OUT_FOR_DELIVERY" | "DELIVERED",
   paymentStatus: "PENDING" | "PAID" | "FAILED",
   timestamps: true
 }

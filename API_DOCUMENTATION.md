@@ -71,28 +71,30 @@ In production, replace with your production domain.
 **Authentication:** Not required  
 **Description:** Register a new user account
 
+If `userType` is `RESTAURANT`, include `restaurantName`, `restaurantAddress`, `cuisineType`, and `description` to create the restaurant profile.
+
 **Request Body:**
 ```json
 {
-  "name": "John Doe",
+  "username": "John Doe",
   "email": "john@example.com",
   "password": "securePassword123",
-  "phone": "+91-9876543210"
+  "userType": "USER",
+  "phone": "+91-9876543210",
+  "address": "123 Main Street"
 }
 ```
 
 **Response (Success - 201):**
 ```json
 {
-  "success": true,
-  "message": "User registered successfully",
-  "user": {
-    "id": "user_id_12345",
-    "name": "John Doe",
-    "email": "john@example.com",
-    "phone": "+91-9876543210",
-    "role": "USER"
-  },
+  "_id": "user_id_12345",
+  "username": "John Doe",
+  "email": "john@example.com",
+  "userType": "USER",
+  "emailVerified": false,
+  "phoneVerified": false,
+  "message": "Registration successful! Please check your email for verification code.",
   "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
 }
 ```
@@ -116,15 +118,14 @@ In production, replace with your production domain.
 **Response (Success - 200):**
 ```json
 {
-  "success": true,
-  "message": "Login successful",
-  "user": {
-    "id": "user_id_12345",
-    "name": "John Doe",
-    "email": "john@example.com",
-    "phone": "+91-9876543210",
-    "role": "USER"
-  },
+  "_id": "user_id_12345",
+  "username": "John Doe",
+  "email": "john@example.com",
+  "userType": "USER",
+  "staffRole": null,
+  "restaurantId": null,
+  "emailVerified": false,
+  "phoneVerified": false,
   "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
 }
 ```
@@ -140,16 +141,20 @@ In production, replace with your production domain.
 **Response (Success - 200):**
 ```json
 {
-  "success": true,
-  "user": {
-    "id": "user_id_12345",
-    "name": "John Doe",
-    "email": "john@example.com",
-    "phone": "+91-9876543210",
-    "role": "USER",
-    "profileImage": "https://cdn.example.com/profiles/user_id_12345.jpg",
-    "createdAt": "2024-01-15T10:30:00Z"
-  }
+  "_id": "user_id_12345",
+  "username": "John Doe",
+  "email": "john@example.com",
+  "phone": "+91-9876543210",
+  "address": "123 Main Street",
+  "profileImage": "https://cdn.example.com/profiles/user_id_12345.jpg",
+  "userType": "USER",
+  "staffRole": null,
+  "restaurantId": null,
+  "emailVerified": false,
+  "phoneVerified": false,
+  "status": "active",
+  "createdAt": "2024-01-15T10:30:00Z",
+  "updatedAt": "2024-01-15T10:30:00Z"
 }
 ```
 
@@ -164,22 +169,26 @@ In production, replace with your production domain.
 **Request Body:**
 ```json
 {
-  "name": "John Updated",
-  "phone": "+91-9876543211"
+  "username": "John Updated",
+  "phone": "+91-9876543211",
+  "address": "456 Elm Street"
 }
 ```
 
 **Response (Success - 200):**
 ```json
 {
-  "success": true,
   "message": "Profile updated successfully",
   "user": {
-    "id": "user_id_12345",
-    "name": "John Updated",
+    "_id": "user_id_12345",
+    "username": "John Updated",
     "email": "john@example.com",
     "phone": "+91-9876543211",
-    "role": "USER"
+    "address": "456 Elm Street",
+    "profileImage": "https://cdn.example.com/profiles/user_id_12345.jpg",
+    "userType": "USER",
+    "emailVerified": false,
+    "phoneVerified": false
   }
 }
 ```
@@ -243,39 +252,32 @@ See Authentication Endpoints section above.
 **Request Body:**
 ```json
 {
-  "name": "Margherita Pizza",
+  "title": "Margherita Pizza",
   "description": "Classic Italian pizza with fresh mozzarella",
   "price": 299,
   "category": "Pizza",
-  "image": "https://cdn.example.com/foods/pizza.jpg",
-  "cuisine": "Italian",
-  "isVegan": false,
-  "isVegetarian": true,
-  "spicyLevel": 2,
-  "servingSize": "1 Large"
+  "menuType": "Main",
+  "mainImg": "https://cdn.example.com/foods/pizza.jpg",
+  "discount": 0
 }
 ```
 
 **Response (Success - 201):**
 ```json
 {
-  "success": true,
-  "message": "Food item created successfully",
-  "food": {
-    "id": "food_id_12345",
-    "name": "Margherita Pizza",
-    "description": "Classic Italian pizza with fresh mozzarella",
-    "price": 299,
-    "category": "Pizza",
-    "cuisine": "Italian",
-    "isVegan": false,
-    "isVegetarian": true,
-    "spicyLevel": 2,
-    "servingSize": "1 Large",
-    "restaurant": "restaurant_id_12345",
-    "available": true,
-    "createdAt": "2024-01-15T10:30:00Z"
-  }
+  "_id": "food_id_12345",
+  "restaurantId": "restaurant_id_12345",
+  "title": "Margherita Pizza",
+  "description": "Classic Italian pizza with fresh mozzarella",
+  "price": 299,
+  "category": "Pizza",
+  "menuType": "Main",
+  "mainImg": "https://cdn.example.com/foods/pizza.jpg",
+  "discount": 0,
+  "rating": 0,
+  "isAvailable": true,
+  "createdAt": "2024-01-15T10:30:00Z",
+  "updatedAt": "2024-01-15T10:30:00Z"
 }
 ```
 
@@ -287,7 +289,7 @@ See Authentication Endpoints section above.
 
 **Endpoint:** `GET /foods`  
 **Authentication:** Not required  
-**Description:** Retrieve all available food items from all restaurants
+**Description:** Retrieve all food items from all restaurants
 
 **Query Parameters:**
 ```
@@ -300,20 +302,20 @@ GET /foods?page=1&limit=10&category=Pizza&cuisine=Italian&sortBy=name&searchTerm
   "success": true,
   "foods": [
     {
-      "id": "food_id_12345",
-      "name": "Margherita Pizza",
+      "_id": "food_id_12345",
+      "title": "Margherita Pizza",
       "description": "Classic Italian pizza with fresh mozzarella",
       "price": 299,
       "category": "Pizza",
-      "image": "https://cdn.example.com/foods/pizza.jpg",
-      "cuisine": "Italian",
-      "restaurant": {
-        "id": "restaurant_id_12345",
-        "name": "Pizza Palace"
+      "mainImg": "https://cdn.example.com/foods/pizza.jpg",
+      "menuType": "Main",
+      "restaurantId": {
+        "_id": "restaurant_id_12345",
+        "title": "Pizza Palace"
       },
-      "available": true,
-      "averageRating": 4.5,
-      "reviewCount": 25
+      "discount": 0,
+      "rating": 0,
+      "isAvailable": true
     }
   ],
   "pagination": {
@@ -339,12 +341,13 @@ GET /foods?page=1&limit=10&category=Pizza&cuisine=Italian&sortBy=name&searchTerm
   "restaurant": "Pizza Palace",
   "foods": [
     {
-      "id": "food_id_12345",
-      "name": "Margherita Pizza",
+      "_id": "food_id_12345",
+      "title": "Margherita Pizza",
       "price": 299,
-      "image": "https://cdn.example.com/foods/pizza.jpg",
-      "available": true,
-      "averageRating": 4.5
+      "mainImg": "https://cdn.example.com/foods/pizza.jpg",
+      "discount": 0,
+      "rating": 0,
+      "isAvailable": true
     }
   ]
 }
@@ -363,34 +366,22 @@ GET /foods?page=1&limit=10&category=Pizza&cuisine=Italian&sortBy=name&searchTerm
 {
   "success": true,
   "food": {
-    "id": "food_id_12345",
-    "name": "Margherita Pizza",
+    "_id": "food_id_12345",
+    "title": "Margherita Pizza",
     "description": "Classic Italian pizza with fresh mozzarella",
     "price": 299,
     "category": "Pizza",
-    "image": "https://cdn.example.com/foods/pizza.jpg",
-    "cuisine": "Italian",
-    "isVegan": false,
-    "isVegetarian": true,
-    "spicyLevel": 2,
-    "servingSize": "1 Large",
-    "restaurant": {
-      "id": "restaurant_id_12345",
-      "name": "Pizza Palace",
-      "image": "https://cdn.example.com/restaurants/pizza-palace.jpg"
+    "menuType": "Main",
+    "mainImg": "https://cdn.example.com/foods/pizza.jpg",
+    "discount": 0,
+    "rating": 0,
+    "restaurantId": {
+      "_id": "restaurant_id_12345",
+      "title": "Pizza Palace"
     },
-    "available": true,
-    "reviews": [
-      {
-        "id": "review_id_12345",
-        "user": "John Doe",
-        "rating": 5,
-        "comment": "Amazing pizza!",
-        "createdAt": "2024-01-10T08:00:00Z"
-      }
-    ],
-    "averageRating": 4.5,
-    "reviewCount": 25
+    "isAvailable": true,
+    "createdAt": "2024-01-10T08:00:00Z",
+    "updatedAt": "2024-01-10T08:00:00Z"
   }
 }
 ```
@@ -405,19 +396,25 @@ GET /foods?page=1&limit=10&category=Pizza&cuisine=Italian&sortBy=name&searchTerm
 
 **Response (Success - 200):**
 ```json
-{
-  "success": true,
-  "foods": [
-    {
-      "id": "food_id_12345",
-      "name": "Margherita Pizza",
-      "price": 299,
-      "category": "Pizza",
-      "available": true,
-      "createdAt": "2024-01-15T10:30:00Z"
-    }
-  ]
-}
+[
+  {
+    "_id": "food_id_12345",
+    "restaurantId": {
+      "_id": "restaurant_id_12345",
+      "title": "Pizza Palace"
+    },
+    "title": "Margherita Pizza",
+    "price": 299,
+    "category": "Pizza",
+    "menuType": "Main",
+    "mainImg": "https://cdn.example.com/foods/pizza.jpg",
+    "discount": 0,
+    "rating": 0,
+    "isAvailable": true,
+    "createdAt": "2024-01-15T10:30:00Z",
+    "updatedAt": "2024-01-15T10:30:00Z"
+  }
+]
 ```
 
 ---
@@ -431,23 +428,29 @@ GET /foods?page=1&limit=10&category=Pizza&cuisine=Italian&sortBy=name&searchTerm
 **Request Body:**
 ```json
 {
-  "name": "Margherita Pizza Premium",
+  "title": "Margherita Pizza Premium",
   "price": 349,
-  "description": "Premium classic Italian pizza with fresh mozzarella"
+  "description": "Premium classic Italian pizza with fresh mozzarella",
+  "category": "Pizza"
 }
 ```
 
 **Response (Success - 200):**
 ```json
 {
-  "success": true,
-  "message": "Food item updated successfully",
-  "food": {
-    "id": "food_id_12345",
-    "name": "Margherita Pizza Premium",
-    "price": 349,
-    "description": "Premium classic Italian pizza with fresh mozzarella"
-  }
+  "_id": "food_id_12345",
+  "restaurantId": "restaurant_id_12345",
+  "title": "Margherita Pizza Premium",
+  "description": "Premium classic Italian pizza with fresh mozzarella",
+  "price": 349,
+  "category": "Pizza",
+  "menuType": "Main",
+  "mainImg": "https://cdn.example.com/foods/pizza.jpg",
+  "discount": 0,
+  "rating": 0,
+  "isAvailable": true,
+  "createdAt": "2024-01-15T10:30:00Z",
+  "updatedAt": "2024-01-15T10:40:00Z"
 }
 ```
 
@@ -462,16 +465,15 @@ GET /foods?page=1&limit=10&category=Pizza&cuisine=Italian&sortBy=name&searchTerm
 **Request Body:**
 ```json
 {
-  "available": false
+  "isAvailable": false
 }
 ```
 
 **Response (Success - 200):**
 ```json
 {
-  "success": true,
-  "message": "Availability updated",
-  "available": false
+  "_id": "food_id_12345",
+  "isAvailable": false
 }
 ```
 
@@ -505,41 +507,28 @@ GET /foods?page=1&limit=10&category=Pizza&cuisine=Italian&sortBy=name&searchTerm
 ```json
 {
   "foodId": "food_id_12345",
-  "quantity": 2,
-  "specialInstructions": "Extra cheese, light onions",
-  "restaurantId": "restaurant_id_12345"
+  "quantity": 2
 }
 ```
 
 **Response (Success - 201):**
 ```json
 {
-  "success": true,
-  "message": "Item added to cart",
-  "cart": {
-    "id": "cart_id_12345",
-    "user": "user_id_12345",
-    "items": [
-      {
-        "id": "cart_item_12345",
-        "food": {
-          "id": "food_id_12345",
-          "name": "Margherita Pizza",
-          "price": 299,
-          "image": "https://cdn.example.com/foods/pizza.jpg"
-        },
-        "quantity": 2,
-        "subtotal": 598,
-        "specialInstructions": "Extra cheese, light onions"
-      }
-    ],
-    "restaurant": {
-      "id": "restaurant_id_12345",
-      "name": "Pizza Palace"
-    },
-    "totalPrice": 598,
-    "itemCount": 2
-  }
+  "_id": "cart_id_12345",
+  "userId": "user_id_12345",
+  "restaurantId": "restaurant_id_12345",
+  "items": [
+    {
+      "foodId": "food_id_12345",
+      "itemName": "Margherita Pizza",
+      "itemImg": "https://cdn.example.com/foods/pizza.jpg",
+      "quantity": 2,
+      "price": 299,
+      "discount": 0
+    }
+  ],
+  "createdAt": "2024-01-15T10:30:00Z",
+  "updatedAt": "2024-01-15T10:30:00Z"
 }
 ```
 
@@ -554,43 +543,29 @@ GET /foods?page=1&limit=10&category=Pizza&cuisine=Italian&sortBy=name&searchTerm
 **Response (Success - 200):**
 ```json
 {
-  "success": true,
-  "cart": {
-    "id": "cart_id_12345",
-    "user": "user_id_12345",
-    "items": [
-      {
-        "id": "cart_item_12345",
-        "food": {
-          "id": "food_id_12345",
-          "name": "Margherita Pizza",
-          "price": 299,
-          "image": "https://cdn.example.com/foods/pizza.jpg"
-        },
-        "quantity": 2,
-        "subtotal": 598,
-        "specialInstructions": "Extra cheese, light onions"
-      },
-      {
-        "id": "cart_item_12346",
-        "food": {
-          "id": "food_id_12346",
-          "name": "Caesar Salad",
-          "price": 199,
-          "image": "https://cdn.example.com/foods/salad.jpg"
-        },
-        "quantity": 1,
-        "subtotal": 199,
-        "specialInstructions": ""
-      }
-    ],
-    "restaurant": {
-      "id": "restaurant_id_12345",
-      "name": "Pizza Palace"
+  "_id": "cart_id_12345",
+  "userId": "user_id_12345",
+  "restaurantId": "restaurant_id_12345",
+  "items": [
+    {
+      "foodId": "food_id_12345",
+      "itemName": "Margherita Pizza",
+      "itemImg": "https://cdn.example.com/foods/pizza.jpg",
+      "quantity": 2,
+      "price": 299,
+      "discount": 0
     },
-    "totalPrice": 797,
-    "itemCount": 3
-  }
+    {
+      "foodId": "food_id_12346",
+      "itemName": "Caesar Salad",
+      "itemImg": "https://cdn.example.com/foods/salad.jpg",
+      "quantity": 1,
+      "price": 199,
+      "discount": 0
+    }
+  ],
+  "createdAt": "2024-01-15T10:30:00Z",
+  "updatedAt": "2024-01-15T10:30:00Z"
 }
 ```
 
@@ -603,17 +578,26 @@ GET /foods?page=1&limit=10&category=Pizza&cuisine=Italian&sortBy=name&searchTerm
 **Description:** Remove a specific item from the cart
 
 **Path Parameters:**
-- `id`: Cart item ID to remove
+- `id`: Food ID to remove from cart
 
 **Response (Success - 200):**
 ```json
 {
-  "success": true,
-  "message": "Item removed from cart",
-  "cart": {
-    "totalPrice": 199,
-    "itemCount": 1
-  }
+  "_id": "cart_id_12345",
+  "userId": "user_id_12345",
+  "restaurantId": "restaurant_id_12345",
+  "items": [
+    {
+      "foodId": "food_id_12346",
+      "itemName": "Caesar Salad",
+      "itemImg": "https://cdn.example.com/foods/salad.jpg",
+      "quantity": 1,
+      "price": 199,
+      "discount": 0
+    }
+  ],
+  "createdAt": "2024-01-15T10:30:00Z",
+  "updatedAt": "2024-01-15T10:30:00Z"
 }
 ```
 
@@ -630,45 +614,33 @@ GET /foods?page=1&limit=10&category=Pizza&cuisine=Italian&sortBy=name&searchTerm
 **Request Body:**
 ```json
 {
-  "deliveryAddress": "123 Main Street, Apartment 4B",
-  "deliveryInstructions": "Ring doorbell twice",
-  "paymentMethod": "ONLINE",
-  "cityName": "New York"
+  "address": "123 Main Street, Apartment 4B",
+  "paymentMethod": "RAZORPAY"
 }
 ```
 
 **Response (Success - 201):**
 ```json
 {
-  "success": true,
-  "message": "Order placed successfully",
-  "order": {
-    "id": "order_id_12345",
-    "user": "user_id_12345",
-    "restaurant": {
-      "id": "restaurant_id_12345",
-      "name": "Pizza Palace"
-    },
-    "items": [
-      {
-        "food": {
-          "id": "food_id_12345",
-          "name": "Margherita Pizza"
-        },
-        "quantity": 2,
-        "subtotal": 598
-      }
-    ],
-    "totalPrice": 798,
-    "deliveryFee": 1,
-    "finalPrice": 799,
-    "status": "PENDING",
-    "deliveryAddress": "123 Main Street, Apartment 4B",
-    "deliveryInstructions": "Ring doorbell twice",
-    "paymentMethod": "ONLINE",
-    "createdAt": "2024-01-15T10:30:00Z",
-    "estimatedDeliveryTime": "30-45 minutes"
-  }
+  "_id": "order_id_12345",
+  "userId": "user_id_12345",
+  "restaurantId": "restaurant_id_12345",
+  "items": [
+    {
+      "foodId": "food_id_12345",
+      "title": "Margherita Pizza",
+      "image": "https://cdn.example.com/foods/pizza.jpg",
+      "quantity": 2,
+      "price": 299
+    }
+  ],
+  "address": "123 Main Street, Apartment 4B",
+  "paymentMethod": "RAZORPAY",
+  "totalAmount": 598,
+  "status": "PLACED",
+  "paymentStatus": "PENDING",
+  "createdAt": "2024-01-15T10:30:00Z",
+  "updatedAt": "2024-01-15T10:30:00Z"
 }
 ```
 
@@ -680,34 +652,32 @@ GET /foods?page=1&limit=10&category=Pizza&cuisine=Italian&sortBy=name&searchTerm
 **Authentication:** Required (USER role)  
 **Description:** Retrieve all orders placed by the current user
 
-**Query Parameters:**
-```
-GET /orders/my-orders?status=DELIVERED&limit=10&page=1
-```
-
 **Response (Success - 200):**
 ```json
-{
-  "success": true,
-  "orders": [
-    {
-      "id": "order_id_12345",
-      "restaurant": {
-        "id": "restaurant_id_12345",
-        "name": "Pizza Palace"
-      },
-      "totalPrice": 799,
-      "status": "DELIVERED",
-      "createdAt": "2024-01-10T10:30:00Z",
-      "deliveredAt": "2024-01-10T11:00:00Z"
-    }
-  ],
-  "pagination": {
-    "currentPage": 1,
-    "totalPages": 2,
-    "totalItems": 15
+[
+  {
+    "_id": "order_id_12345",
+    "userId": "user_id_12345",
+    "restaurantId": "restaurant_id_12345",
+    "items": [
+      {
+        "foodId": "food_id_12345",
+        "itemName": "Margherita Pizza",
+        "itemImg": "https://cdn.example.com/foods/pizza.jpg",
+        "quantity": 2,
+        "price": 299,
+        "discount": 0
+      }
+    ],
+    "address": "123 Main Street, Apartment 4B",
+    "paymentMethod": "RAZORPAY",
+    "totalAmount": 598,
+    "status": "DELIVERED",
+    "paymentStatus": "PAID",
+    "createdAt": "2024-01-10T10:30:00Z",
+    "updatedAt": "2024-01-10T11:00:00Z"
   }
-}
+]
 ```
 
 ---
@@ -718,38 +688,37 @@ GET /orders/my-orders?status=DELIVERED&limit=10&page=1
 **Authentication:** Required (RESTAURANT, STAFF role)  
 **Description:** Get all orders for the restaurant
 
-**Query Parameters:**
-```
-GET /orders/restaurant?status=PREPARING&limit=20
-```
-
 **Response (Success - 200):**
 ```json
-{
-  "success": true,
-  "orders": [
-    {
-      "id": "order_id_12345",
-      "user": {
-        "id": "user_id_12345",
-        "name": "John Doe",
-        "phone": "+91-9876543210"
-      },
-      "items": [
-        {
-          "food": {
-            "name": "Margherita Pizza"
-          },
-          "quantity": 2
-        }
-      ],
-      "status": "PREPARING",
-      "totalPrice": 799,
-      "deliveryAddress": "123 Main Street, Apartment 4B",
-      "createdAt": "2024-01-15T10:30:00Z"
-    }
-  ]
-}
+[
+  {
+    "_id": "order_id_12345",
+    "userId": {
+      "_id": "user_id_12345",
+      "username": "John Doe",
+      "email": "john@example.com",
+      "phone": "+91-9876543210"
+    },
+    "restaurantId": "restaurant_id_12345",
+    "items": [
+      {
+        "foodId": "food_id_12345",
+        "itemName": "Margherita Pizza",
+        "itemImg": "https://cdn.example.com/foods/pizza.jpg",
+        "quantity": 2,
+        "price": 299,
+        "discount": 0
+      }
+    ],
+    "address": "123 Main Street, Apartment 4B",
+    "paymentMethod": "RAZORPAY",
+    "totalAmount": 598,
+    "status": "PREPARING",
+    "paymentStatus": "PAID",
+    "createdAt": "2024-01-15T10:30:00Z",
+    "updatedAt": "2024-01-15T10:30:00Z"
+  }
+]
 ```
 
 ---
@@ -768,23 +737,37 @@ GET /orders/restaurant?status=PREPARING&limit=20
 ```
 
 **Valid Status Values:**
+- `PLACED` - Order created
 - `PENDING` - Order received but not yet accepted
+- `CONFIRMED` - Restaurant accepted the order
 - `PREPARING` - Restaurant is preparing the food
-- `READY_FOR_PICKUP` - Food is ready
+- `READY` - Food is ready
 - `OUT_FOR_DELIVERY` - Order is being delivered
 - `DELIVERED` - Order delivered successfully
-- `CANCELLED` - Order cancelled
 
 **Response (Success - 200):**
 ```json
 {
-  "success": true,
-  "message": "Order status updated successfully",
-  "order": {
-    "id": "order_id_12345",
-    "status": "PREPARING",
-    "updatedAt": "2024-01-15T10:35:00Z"
-  }
+  "_id": "order_id_12345",
+  "userId": "user_id_12345",
+  "restaurantId": "restaurant_id_12345",
+  "items": [
+    {
+      "foodId": "food_id_12345",
+      "itemName": "Margherita Pizza",
+      "itemImg": "https://cdn.example.com/foods/pizza.jpg",
+      "quantity": 2,
+      "price": 299,
+      "discount": 0
+    }
+  ],
+  "address": "123 Main Street, Apartment 4B",
+  "paymentMethod": "RAZORPAY",
+  "totalAmount": 598,
+  "status": "PREPARING",
+  "paymentStatus": "PAID",
+  "createdAt": "2024-01-15T10:30:00Z",
+  "updatedAt": "2024-01-15T10:35:00Z"
 }
 ```
 
@@ -799,23 +782,24 @@ GET /orders/restaurant?status=PREPARING&limit=20
 **Request Body:**
 ```json
 {
-  "requestedStatus": "READY_FOR_PICKUP",
-  "reason": "Food is ready for delivery"
+  "status": "READY"
 }
 ```
 
 **Response (Success - 201):**
 ```json
 {
-  "success": true,
-  "message": "Status change request submitted",
+  "message": "Status change requested",
   "request": {
-    "id": "status_request_12345",
-    "order": "order_id_12345",
-    "requestedStatus": "READY_FOR_PICKUP",
-    "reason": "Food is ready for delivery",
+    "_id": "status_request_12345",
+    "orderId": "order_id_12345",
+    "restaurantId": "restaurant_id_12345",
+    "requestedBy": "staff_id_12345",
+    "fromStatus": "PREPARING",
+    "toStatus": "READY",
     "status": "PENDING",
-    "createdAt": "2024-01-15T10:35:00Z"
+    "createdAt": "2024-01-15T10:35:00Z",
+    "updatedAt": "2024-01-15T10:35:00Z"
   }
 }
 ```
@@ -828,20 +812,16 @@ GET /orders/restaurant?status=PREPARING&limit=20
 
 **Endpoint:** `POST /payment/create-order`  
 **Authentication:** Required (USER role)  
-**Description:** Create a Razorpay payment order (requires existing order in the system)
+**Description:** Create a Razorpay payment order for the current cart
 
 **Request Body:**
 ```json
-{
-  "orderId": "order_id_12345",
-  "amount": 79900
-}
+{}
 ```
 
 **Response (Success - 201):**
 ```json
 {
-  "success": true,
   "razorpayOrder": {
     "id": "order_xxxxxxxxxx",
     "entity": "order",
@@ -849,12 +829,13 @@ GET /orders/restaurant?status=PREPARING&limit=20
     "amount_paid": 0,
     "amount_due": 79900,
     "currency": "INR",
-    "receipt": "order_id_12345",
+    "receipt": "receipt_1705315200",
     "status": "created",
     "attempts": 0,
     "notes": {},
     "created_at": 1705315200
-  }
+  },
+  "paymentId": "payment_id_12345"
 }
 ```
 
@@ -872,28 +853,36 @@ GET /orders/restaurant?status=PREPARING&limit=20
   "razorpay_order_id": "order_xxxxxxxxxx",
   "razorpay_payment_id": "pay_xxxxxxxxxx",
   "razorpay_signature": "signature_xxxxxxxxxxxxxx",
-  "orderId": "order_id_12345"
+  "paymentId": "payment_id_12345",
+  "address": "123 Main Street, Apartment 4B"
 }
 ```
 
 **Response (Success - 200):**
 ```json
 {
-  "success": true,
-  "message": "Payment verified and processed successfully",
-  "payment": {
-    "id": "payment_id_12345",
-    "order": "order_id_12345",
-    "razorpayPaymentId": "pay_xxxxxxxxxx",
-    "amount": 79900,
-    "currency": "INR",
-    "status": "COMPLETED",
-    "createdAt": "2024-01-15T10:40:00Z"
-  },
+  "message": "Payment verified & order placed successfully",
   "order": {
-    "id": "order_id_12345",
-    "status": "CONFIRMED",
-    "paymentStatus": "PAID"
+    "_id": "order_id_12345",
+    "userId": "user_id_12345",
+    "restaurantId": "restaurant_id_12345",
+    "items": [
+      {
+        "foodId": "food_id_12345",
+        "itemName": "Margherita Pizza",
+        "itemImg": "https://cdn.example.com/foods/pizza.jpg",
+        "quantity": 2,
+        "price": 299,
+        "discount": 0
+      }
+    ],
+    "address": "123 Main Street, Apartment 4B",
+    "totalAmount": 598,
+    "paymentId": "payment_id_12345",
+    "paymentStatus": "PAID",
+    "status": "PLACED",
+    "createdAt": "2024-01-15T10:40:00Z",
+    "updatedAt": "2024-01-15T10:40:00Z"
   }
 }
 ```
@@ -913,28 +902,24 @@ GET /orders/restaurant?status=PREPARING&limit=20
 {
   "foodId": "food_id_12345",
   "rating": 5,
-  "comment": "Absolutely delicious! Best pizza I've had in a long time.",
-  "deliveryExperience": 4
+  "comment": "Absolutely delicious! Best pizza I've had in a long time."
 }
 ```
 
 **Response (Success - 201):**
 ```json
 {
-  "success": true,
-  "message": "Review added successfully",
-  "review": {
-    "id": "review_id_12345",
-    "food": "food_id_12345",
-    "user": {
-      "id": "user_id_12345",
-      "name": "John Doe"
-    },
-    "rating": 5,
-    "comment": "Absolutely delicious! Best pizza I've had in a long time.",
-    "deliveryExperience": 4,
-    "createdAt": "2024-01-15T10:45:00Z"
-  }
+  "_id": "review_id_12345",
+  "foodId": "food_id_12345",
+  "userId": {
+    "_id": "user_id_12345",
+    "username": "John Doe",
+    "email": "john@example.com"
+  },
+  "rating": 5,
+  "comment": "Absolutely delicious! Best pizza I've had in a long time.",
+  "createdAt": "2024-01-15T10:45:00Z",
+  "updatedAt": "2024-01-15T10:45:00Z"
 }
 ```
 
@@ -958,15 +943,16 @@ GET /reviews/food/food_id_12345?limit=10&page=1&sortBy=-createdAt
   "food": "food_id_12345",
   "reviews": [
     {
-      "id": "review_id_12345",
-      "user": {
-        "id": "user_id_12345",
-        "name": "John Doe"
+      "_id": "review_id_12345",
+      "userId": {
+        "_id": "user_id_12345",
+        "username": "John Doe",
+        "email": "john@example.com"
       },
       "rating": 5,
       "comment": "Absolutely delicious!",
-      "deliveryExperience": 4,
-      "createdAt": "2024-01-15T10:45:00Z"
+      "createdAt": "2024-01-15T10:45:00Z",
+      "updatedAt": "2024-01-15T10:45:00Z"
     }
   ],
   "pagination": {
@@ -988,20 +974,8 @@ GET /reviews/food/food_id_12345?limit=10&page=1&sortBy=-createdAt
 **Response (Success - 200):**
 ```json
 {
-  "success": true,
-  "stats": {
-    "foodId": "food_id_12345",
-    "averageRating": 4.6,
-    "totalReviews": 25,
-    "ratingsBreakdown": {
-      "5": 15,
-      "4": 8,
-      "3": 2,
-      "2": 0,
-      "1": 0
-    },
-    "averageDeliveryExperience": 4.4
-  }
+  "averageRating": 4.6,
+  "totalReviews": 25
 }
 ```
 
@@ -1064,21 +1038,13 @@ GET /reviews/food/food_id_12345?limit=10&page=1&sortBy=-createdAt
 **Response (Success - 200):**
 ```json
 {
-  "success": true,
-  "stats": {
-    "totalUsers": 1250,
-    "totalRestaurants": 85,
-    "totalOrders": 3450,
-    "totalRevenue": 5425000,
-    "totalReviews": 2890,
-    "activeRestaurants": 72,
-    "pendingApprovals": 8,
-    "monthlyGrowth": {
-      "users": 12.5,
-      "orders": 18.3,
-      "revenue": 22.1
-    }
-  }
+  "totalUsers": 1250,
+  "totalOrders": 3450,
+  "totalRevenue": 5425000,
+  "pendingOrders": 45,
+  "deliveredToday": 120,
+  "avgOrderValue": 1573,
+  "conversionRate": "2.76"
 }
 ```
 
@@ -1092,30 +1058,27 @@ GET /reviews/food/food_id_12345?limit=10&page=1&sortBy=-createdAt
 
 **Query Parameters:**
 ```
-GET /admin/users?role=USER&status=ACTIVE&limit=20&page=1
+GET /admin/users?page=1&limit=20&search=
 ```
 
 **Response (Success - 200):**
 ```json
 {
-  "success": true,
   "users": [
     {
-      "id": "user_id_12345",
-      "name": "John Doe",
+      "_id": "user_id_12345",
+      "username": "John Doe",
       "email": "john@example.com",
       "phone": "+91-9876543210",
-      "role": "USER",
-      "status": "ACTIVE",
+      "userType": "USER",
+      "status": "active",
       "createdAt": "2024-01-10T08:00:00Z",
-      "lastLogin": "2024-01-15T10:30:00Z"
+      "updatedAt": "2024-01-15T10:30:00Z"
     }
   ],
-  "pagination": {
-    "currentPage": 1,
-    "totalPages": 10,
-    "totalItems": 185
-  }
+  "total": 185,
+  "pages": 10,
+  "currentPage": 1
 }
 ```
 
@@ -1130,19 +1093,21 @@ GET /admin/users?role=USER&status=ACTIVE&limit=20&page=1
 **Response (Success - 200):**
 ```json
 {
-  "success": true,
-  "user": {
-    "id": "user_id_12345",
-    "name": "John Doe",
-    "email": "john@example.com",
-    "phone": "+91-9876543210",
-    "role": "USER",
-    "status": "ACTIVE",
-    "profileImage": "https://cdn.example.com/profiles/user_id_12345.jpg",
-    "totalOrders": 12,
-    "totalSpent": 4500,
-    "createdAt": "2024-01-10T08:00:00Z"
-  }
+  "_id": "user_id_12345",
+  "username": "John Doe",
+  "email": "john@example.com",
+  "phone": "+91-9876543210",
+  "address": "123 Main Street",
+  "profileImage": "https://cdn.example.com/profiles/user_id_12345.jpg",
+  "emailVerified": false,
+  "phoneVerified": false,
+  "userType": "USER",
+  "staffRole": null,
+  "restaurantId": null,
+  "status": "active",
+  "approval": true,
+  "createdAt": "2024-01-10T08:00:00Z",
+  "updatedAt": "2024-01-15T10:30:00Z"
 }
 ```
 
@@ -1152,24 +1117,25 @@ GET /admin/users?role=USER&status=ACTIVE&limit=20&page=1
 
 **Endpoint:** `PUT /admin/users/:id/status`  
 **Authentication:** Required (ADMIN role)  
-**Description:** Update user status (ACTIVE, SUSPENDED, etc.)
+**Description:** Update user status (`active`, `inactive`, `banned`)
 
 **Request Body:**
 ```json
 {
-  "status": "SUSPENDED",
-  "reason": "Violation of terms"
+  "status": "banned"
 }
 ```
 
 **Response (Success - 200):**
 ```json
 {
-  "success": true,
-  "message": "User status updated",
+  "message": "User status updated successfully",
   "user": {
-    "id": "user_id_12345",
-    "status": "SUSPENDED"
+    "_id": "user_id_12345",
+    "username": "John Doe",
+    "email": "john@example.com",
+    "userType": "USER",
+    "status": "banned"
   }
 }
 ```
@@ -1387,33 +1353,30 @@ GET /admin/orders?status=DELIVERED&limit=20&page=1&sortBy=-createdAt
 
 **Endpoint:** `GET /restaurants`  
 **Authentication:** Not required  
-**Description:** List all approved restaurants
-
-**Query Parameters:**
-```
-GET /restaurants?cuisine=Italian&city=NewYork&limit=10&page=1&searchTerm=pizza
-```
+**Description:** List all restaurants
 
 **Response (Success - 200):**
 ```json
-{
-  "success": true,
-  "restaurants": [
-    {
-      "id": "restaurant_id_12345",
-      "name": "Pizza Palace",
-      "description": "Authentic Italian pizzeria",
-      "cuisines": ["Italian", "Mediterranean"],
-      "image": "https://cdn.example.com/restaurants/pizza-palace.jpg",
-      "deliveryTime": "30-45 minutes",
-      "deliveryFee": 50,
-      "rating": 4.7,
-      "reviewCount": 245,
-      "isOpen": true,
-      "address": "123 Main Street"
-    }
-  ]
-}
+[
+  {
+    "_id": "restaurant_id_12345",
+    "title": "Pizza Palace",
+    "address": "123 Main Street",
+    "phone": "+1-2125551234",
+    "cuisineType": "Italian",
+    "description": "Authentic Italian pizzeria",
+    "status": "approved",
+    "profileImage": "https://cdn.example.com/restaurants/pizza-palace.jpg",
+    "ownerId": {
+      "_id": "user_id_12345",
+      "username": "Pizza Owner",
+      "email": "owner@example.com",
+      "phone": "+1-2125551234"
+    },
+    "createdAt": "2024-01-10T08:00:00Z",
+    "updatedAt": "2024-01-10T08:00:00Z"
+  }
+]
 ```
 
 ---
@@ -1428,23 +1391,27 @@ GET /restaurants?cuisine=Italian&city=NewYork&limit=10&page=1&searchTerm=pizza
 ```json
 {
   "success": true,
-  "restaurant": {
-    "id": "restaurant_id_12345",
-    "name": "Pizza Palace",
-    "description": "Authentic Italian pizzeria",
-    "cuisines": ["Italian", "Mediterranean"],
-    "address": "123 Main Street",
-    "city": "New York",
+  "user": {
+    "_id": "user_id_12345",
+    "username": "Pizza Owner",
+    "email": "owner@example.com",
     "phone": "+1-2125551234",
-    "email": "owner@pizzapalace.com",
-    "image": "https://cdn.example.com/restaurants/pizza-palace.jpg",
-    "licenseNumber": "REST123456",
-    "status": "APPROVED",
-    "owner": {
-      "id": "user_id_12345",
-      "name": "Pizza Owner",
-      "email": "owner@example.com"
-    }
+    "address": "123 Main Street",
+    "profileImage": "https://cdn.example.com/profiles/user_id_12345.jpg",
+    "emailVerified": false,
+    "phoneVerified": false,
+    "approval": true
+  },
+  "restaurant": {
+    "_id": "restaurant_id_12345",
+    "title": "Pizza Palace",
+    "address": "123 Main Street",
+    "phone": "+1-2125551234",
+    "cuisineType": "Italian",
+    "description": "Authentic Italian pizzeria",
+    "profileImage": "https://cdn.example.com/restaurants/pizza-palace.jpg",
+    "createdAt": "2024-01-10T08:00:00Z",
+    "updatedAt": "2024-01-10T08:00:00Z"
   }
 }
 ```
@@ -1460,10 +1427,14 @@ GET /restaurants?cuisine=Italian&city=NewYork&limit=10&page=1&searchTerm=pizza
 **Request Body:**
 ```json
 {
-  "description": "Premium Italian restaurant with wood-fired oven",
-  "cuisines": ["Italian", "Mediterranean"],
+  "username": "Pizza Owner",
   "phone": "+1-2125551234",
-  "address": "456 Broadway"
+  "address": "456 Broadway",
+  "restaurantTitle": "Pizza Palace",
+  "restaurantAddress": "456 Broadway",
+  "restaurantPhone": "+1-2125551234",
+  "cuisineType": "Italian",
+  "description": "Premium Italian restaurant with wood-fired oven"
 }
 ```
 
@@ -1523,24 +1494,16 @@ GET /restaurants?cuisine=Italian&city=NewYork&limit=10&page=1&searchTerm=pizza
 ```json
 {
   "email": "staff@example.com",
-  "name": "John Staff",
-  "phone": "+91-9876543210",
-  "role": "KITCHEN_STAFF"
+  "role": "CHEF"
 }
 ```
 
 **Response (Success - 201):**
 ```json
 {
-  "success": true,
-  "message": "Invitation sent successfully",
-  "invite": {
-    "id": "invite_id_12345",
-    "email": "staff@example.com",
-    "status": "PENDING",
-    "inviteToken": "token_xxxxxxxxxx",
-    "inviteLink": "https://orderonthego.com/staff-invite/token_xxxxxxxxxx"
-  }
+  "message": "Staff invite created",
+  "inviteToken": "token_xxxxxxxxxx",
+  "expiresAt": "2024-01-18T10:00:00Z"
 }
 ```
 
@@ -1555,24 +1518,16 @@ GET /restaurants?cuisine=Italian&city=NewYork&limit=10&page=1&searchTerm=pizza
 **Request Body:**
 ```json
 {
-  "password": "securePassword123",
-  "phone": "+91-9876543210"
+  "username": "John Staff",
+  "password": "securePassword123"
 }
 ```
 
 **Response (Success - 201):**
 ```json
 {
-  "success": true,
-  "message": "Staff account created successfully",
-  "user": {
-    "id": "staff_id_12345",
-    "name": "John Staff",
-    "email": "staff@example.com",
-    "role": "STAFF",
-    "status": "PENDING_APPROVAL"
-  },
-  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+  "message": "Staff account created. Awaiting owner approval.",
+  "staffId": "staff_id_12345"
 }
 ```
 
@@ -1772,44 +1727,58 @@ GET /restaurants?cuisine=Italian&city=NewYork&limit=10&page=1&searchTerm=pizza
   "success": true,
   "plans": [
     {
-      "id": "plan_basic",
-      "name": "Basic",
-      "price": 499,
-      "billingCycle": "monthly",
-      "features": {
-        "maxMenuItems": 50,
-        "maxStaffMembers": 2,
-        "analytics": false,
-        "prioritySupport": false
-      },
-      "description": "Perfect for small restaurants"
+      "name": "FREE",
+      "maxMenuItems": 5,
+      "maxOrdersPerDay": 10,
+      "analyticsAccess": false,
+      "prioritySupport": false,
+      "customBranding": false,
+      "price": 0,
+      "duration": 0,
+      "features": [
+        "Up to 5 menu items",
+        "10 orders per day",
+        "Basic dashboard",
+        "Email support",
+        "Standard visibility"
+      ]
     },
     {
-      "id": "plan_pro",
-      "name": "Professional",
-      "price": 1299,
-      "billingCycle": "monthly",
-      "features": {
-        "maxMenuItems": 200,
-        "maxStaffMembers": 10,
-        "analytics": true,
-        "prioritySupport": true
-      },
-      "description": "For growing restaurants"
+      "name": "BASIC",
+      "maxMenuItems": 25,
+      "maxOrdersPerDay": 50,
+      "analyticsAccess": true,
+      "prioritySupport": false,
+      "customBranding": false,
+      "price": 999,
+      "duration": 30,
+      "features": [
+        "Up to 25 menu items",
+        "50 orders per day",
+        "Advanced analytics",
+        "Email & chat support",
+        "Enhanced visibility"
+      ],
+      "popular": false
     },
     {
-      "id": "plan_enterprise",
-      "name": "Enterprise",
-      "price": 3999,
-      "billingCycle": "monthly",
-      "features": {
-        "maxMenuItems": "unlimited",
-        "maxStaffMembers": "unlimited",
-        "analytics": true,
-        "prioritySupport": true,
-        "customBranding": true
-      },
-      "description": "For large restaurant chains"
+      "name": "PREMIUM",
+      "maxMenuItems": 100,
+      "maxOrdersPerDay": 200,
+      "analyticsAccess": true,
+      "prioritySupport": true,
+      "customBranding": true,
+      "price": 2499,
+      "duration": 30,
+      "features": [
+        "Up to 100 menu items",
+        "200 orders per day",
+        "Full analytics suite",
+        "Priority 24/7 support",
+        "Custom branding",
+        "Featured placement"
+      ],
+      "popular": true
     }
   ]
 }
@@ -1860,21 +1829,40 @@ GET /restaurants?cuisine=Italian&city=NewYork&limit=10&page=1&searchTerm=pizza
 **Request Body:**
 ```json
 {
-  "planId": "plan_pro",
-  "paymentMethodId": "payment_method_12345"
+  "plan": "BASIC",
+  "paymentDetails": {
+    "paymentId": "pay_xxxxxxxxxx",
+    "orderId": "order_xxxxxxxxxx",
+    "signature": "signature_xxxxxxxxxx"
+  }
 }
 ```
 
 **Response (Success - 201):**
 ```json
 {
-  "success": true,
-  "message": "Subscription created successfully",
+  "message": "Successfully subscribed to BASIC plan",
   "subscription": {
-    "id": "subscription_id_12345",
-    "plan": "plan_pro",
+    "_id": "subscription_id_12345",
+    "restaurantId": "restaurant_owner_id",
+    "plan": "BASIC",
     "status": "ACTIVE",
-    "startDate": "2024-01-15T10:30:00Z"
+    "startDate": "2024-01-15T10:30:00Z",
+    "endDate": "2024-02-14T10:30:00Z",
+    "features": {
+      "maxMenuItems": 25,
+      "maxOrdersPerDay": 50,
+      "analyticsAccess": true,
+      "prioritySupport": false,
+      "customBranding": false
+    },
+    "paymentDetails": {
+      "paymentId": "pay_xxxxxxxxxx",
+      "orderId": "order_xxxxxxxxxx",
+      "signature": "signature_xxxxxxxxxx",
+      "amount": 999,
+      "paymentDate": "2024-01-15T10:30:00Z"
+    }
   }
 }
 ```
@@ -1917,17 +1905,15 @@ GET /restaurants?cuisine=Italian&city=NewYork&limit=10&page=1&searchTerm=pizza
 **Description:** Check if restaurant has reached feature limit
 
 **Path Parameters:**
-- `featureName`: `menuItems`, `staffMembers`
+- `featureName`: `maxMenuItems`, `maxOrdersPerDay`
 
 **Response (Success - 200):**
 ```json
 {
-  "success": true,
-  "feature": "menuItems",
-  "limit": 200,
-  "current": 45,
-  "remaining": 155,
-  "hasReachedLimit": false
+  "canProceed": true,
+  "currentUsage": 12,
+  "limit": 25,
+  "remaining": 13
 }
 ```
 
@@ -2025,6 +2011,7 @@ GET /restaurants?cuisine=Italian&city=NewYork&limit=10&page=1&searchTerm=pizza
 **Request Body:**
 ```json
 {
+  "email": "user@example.com",
   "phone": "+91-9876543210"
 }
 ```
@@ -2049,7 +2036,7 @@ GET /restaurants?cuisine=Italian&city=NewYork&limit=10&page=1&searchTerm=pizza
 **Request Body:**
 ```json
 {
-  "phone": "+91-9876543210",
+  "email": "user@example.com",
   "code": "123456"
 }
 ```

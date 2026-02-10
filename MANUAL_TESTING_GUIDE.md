@@ -48,14 +48,14 @@ Admin Account:
 
 ### 1.1 Authentication Flow
 - [ ] **Register as New User**
-  1. Navigate to `/register`
-  2. Fill in: Name, Email, Phone, Password, Confirm Password
+  1. Navigate to `/register/user`
+  2. Fill in: Username, Email, Phone, Password, Confirm Password
   3. Click "Register"
-  4. Verify: Success message appears, redirected to login
-  5. Verify: Email is stored in database
+  4. Verify: Success message appears
+  5. Verify: Email verification code sent (if SendGrid configured)
 
 - [ ] **Login as User**
-  1. Navigate to `/login`
+  1. Navigate to `/login/user`
   2. Enter email and password
   3. Click "Login"
   4. Verify: JWT token stored in localStorage
@@ -104,10 +104,7 @@ Admin Account:
   2. Verify: Total updates immediately
   3. Verify: Minimum quantity is 1
 
-- [ ] **Subscription Selection in Cart**
-  1. From cart, select a subscription (e.g., weekly, monthly)
-  2. Verify: Discount applied if subscription offers discount
-  3. Verify: New total reflects subscription discount
+
 
 ### 1.4 Checkout & Payment
 - [ ] **Proceed to Checkout**
@@ -118,48 +115,26 @@ Admin Account:
 
 - [ ] **Enter Delivery Details**
   1. Fill in/update delivery address
-  2. Select delivery location on map (if available)
-  3. Click "Continue"
-  4. Verify: Payment page appears
+  2. Click "Continue"
+  3. Verify: Payment page appears
 
 - [ ] **Payment Processing**
-  1. Select payment method (online/cash)
-  2. If online, complete mock payment
+  1. Select online payment (Razorpay)
+  2. Complete test payment flow
   3. Verify: Order created successfully
   4. Verify: Order ID shown and saved
-  5. Verify: Confirmation email/notification sent
+  5. Verify: Confirmation email sent (if SendGrid configured)
 
 ### 1.5 Order Tracking
 - [ ] **View Order Status**
   1. Login and navigate to "My Orders"
   2. Verify: All past orders listed with status
-  3. Verify: Status shows: Pending, Confirmed, Out for Delivery, Delivered
+  3. Verify: Status shows: Placed, Pending, Confirmed, Preparing, Ready, Out for Delivery, Delivered
   4. Verify: Order timestamp displayed
 
-- [ ] **Real-time Order Updates**
-  1. Place a new order
-  2. From admin/staff side, update order status
-  3. Verify: User sees status change without refresh
-  4. Verify: Timeline shows status progression
 
-### 1.6 Subscriptions
-- [ ] **View Available Subscriptions**
-  1. Navigate to subscriptions section
-  2. Verify: Subscription plans displayed (Weekly, Monthly, etc.)
-  3. Verify: Price and benefits shown for each
 
-- [ ] **Purchase Subscription**
-  1. Click "Subscribe" on a plan
-  2. Complete payment
-  3. Verify: Subscription active in profile
-  4. Verify: Discounts applied on future orders
-
-- [ ] **Verify Subscription Benefits**
-  1. Add items to cart (with active subscription)
-  2. Verify: Discount percentage applied
-  3. Verify: Total shows discounted amount
-
-### 1.7 Reviews & Ratings
+### 1.6 Reviews & Ratings
 - [ ] **Write Review for Food**
   1. Go to "My Orders" and completed orders
   2. Click "Rate & Review" button
@@ -169,18 +144,10 @@ Admin Account:
   6. Verify: Review appears on food item page
   7. Verify: Rating count updated
 
-- [ ] **Write Review for Restaurant**
-  1. From restaurant detail page, scroll to reviews
-  2. Click "Write Review"
-  3. Select rating and add comment
-  4. Submit
-  5. Verify: Review appears on restaurant page
-
-### 1.8 User Profile
+### 1.7 User Profile
 - [ ] **View Profile**
   1. Click profile icon → "My Profile"
-  2. Verify: Name, email, phone displayed
-  3. Verify: Subscription status shown
+  2. Verify: Username, email, phone displayed
 
 - [ ] **Update Profile**
   1. Edit name, phone, address
@@ -188,12 +155,7 @@ Admin Account:
   3. Verify: Changes saved and reflected
   4. Verify: Success notification shown
 
-- [ ] **Change Password**
-  1. In profile, click "Change Password"
-  2. Enter old password and new password
-  3. Click "Update"
-  4. Logout and login with new password
-  5. Verify: Login successful with new password
+
 
 ---
 
@@ -201,14 +163,14 @@ Admin Account:
 
 ### 2.1 Authentication
 - [ ] **Register as Restaurant**
-  1. Navigate to `/restaurant-register`
+  1. Navigate to `/register/restaurant`
   2. Fill: Restaurant Name, Cuisines, Email, Password, Phone, Address
   3. Click Register
-  4. Verify: Account created and logged in
-  5. Verify: Redirected to restaurant dashboard
+  4. Verify: Account created and email verification sent
+  5. Verify: Login requires admin approval
 
 - [ ] **Restaurant Login**
-  1. Navigate to `/restaurant-login`
+  1. Navigate to `/login/restaurant`
   2. Enter email and password
   3. Verify: Logged in and token stored
   4. Verify: Redirected to dashboard
@@ -226,13 +188,6 @@ Admin Account:
   4. Verify: Changes saved
   5. Verify: Success message shown
   6. Verify: Changes reflected on public restaurant page
-
-- [ ] **Restaurant Status Toggle**
-  1. From admin dashboard, open restaurant edit modal
-  2. Toggle restaurant status (Active/Inactive)
-  3. Click Save
-  4. Verify: Status reflects in restaurant profile
-  5. Verify: Inactive restaurants don't appear in user search
 
 ### 2.3 Food Management
 - [ ] **Add New Food Item**
@@ -262,7 +217,7 @@ Admin Account:
 ### 2.4 Order Management
 - [ ] **View Incoming Orders**
   1. Navigate to "Orders" section
-  2. Verify: List of all orders (Pending, Confirmed, Delivered, etc.)
+  2. Verify: List of all orders (Placed, Pending, Confirmed, Preparing, Ready, Out for Delivery, Delivered)
   3. Verify: Each order shows customer name, items, amount, time
 
 - [ ] **Accept/Confirm Order**
@@ -271,13 +226,6 @@ Admin Account:
   3. Verify: Status changes to Confirmed
   4. Verify: Estimated prep time displayed
 
-- [ ] **Cancel Order**
-  1. Click on pending order
-  2. Click "Cancel" button
-  3. Enter cancellation reason
-  4. Verify: Status changes to Cancelled
-  5. Verify: Customer notified
-
 - [ ] **View Order Details**
   1. Click on any order
   2. Verify: All items, quantities, total shown
@@ -285,15 +233,10 @@ Admin Account:
   4. Verify: Order timeline displayed
 
 ### 2.5 Restaurant Analytics (VIEW ONLY)
-- [ ] **View Revenue Stats**
-  1. From admin dashboard, go to "Revenue" tab
-  2. Verify: Restaurant-specific revenue shown in breakdown
-  3. Verify: Food and subscription revenue split shown
-
-- [ ] **View Analytics Data**
-  1. Navigate to "Analytics" section (if available to restaurant)
-  2. Verify: Total orders, revenue, ratings displayed
-  3. Verify: Charts show trends
+- [ ] **View Analytics Data (if enabled)**
+  1. Navigate to "Analytics" section
+  2. Verify: Access depends on subscription plan
+  3. Verify: Charts render without errors
 
 ---
 
@@ -309,32 +252,21 @@ Admin Account:
   6. Verify: Staff account created and linked to restaurant
 
 - [ ] **Staff Login**
-  1. Navigate to `/staff-login` or use invite link
+  1. Navigate to `/login` or use invite link
   2. Enter email and password
   3. Verify: Logged in and token stored
   4. Verify: Redirected to staff dashboard
 
 ### 3.2 Order Management
-- [ ] **View Orders for Delivery**
+- [ ] **View Restaurant Orders**
   1. From staff dashboard, view orders list
-  2. Verify: Shows orders assigned to this staff
+  2. Verify: Shows orders for the restaurant
   3. Verify: Status, customer, delivery address shown
 
-- [ ] **Accept Order for Delivery**
-  1. Click "Accept" on an order
-  2. Verify: Order status changes to "Out for Delivery"
-  3. Verify: Real-time tracking enabled
-
-- [ ] **Update Delivery Status**
-  1. While delivering, update status to different checkpoints
-  2. Click "Delivered" when complete
-  3. Verify: Status reflects in user app immediately
-  4. Verify: Completion timestamp recorded
-
-- [ ] **View Delivery Route** (if map integration exists)
-  1. Click on order to view delivery location
-  2. Verify: Map shows customer location
-  3. Verify: Navigation/directions available
+- [ ] **Request Status Change (Staff)**
+  1. Select an order
+  2. Submit status change request (e.g., PREPARING, READY, OUT_FOR_DELIVERY)
+  3. Verify: Request appears in owner approval list
 
 ### 3.3 Staff Profile
 - [ ] **View Staff Profile**
@@ -353,7 +285,7 @@ Admin Account:
 
 ### 4.1 Admin Authentication
 - [ ] **Admin Login**
-  1. Navigate to `/admin-login`
+  1. Navigate to `/admin-access`
   2. Enter admin credentials
   3. Verify: Logged in and redirected to admin dashboard
   4. Verify: Full dashboard access
@@ -361,10 +293,9 @@ Admin Account:
 ### 4.2 Dashboard Overview
 - [ ] **View Dashboard Overview**
   1. From admin dashboard, check "Overview" tab
-  2. Verify: Revenue stats cards visible (Food, Subscription, Total)
+  2. Verify: Stats cards visible (Total Users, Total Orders, Revenue)
   3. Verify: Key metrics displayed (Conversion Rate, Avg Order Value, etc.)
   4. Verify: Recent orders table shown
-  5. Verify: Quick action buttons available
 
 - [ ] **View Metrics**
   1. Check conversion rate calculation
@@ -372,21 +303,11 @@ Admin Account:
   3. Verify: Pending/Delivered today counts correct
   4. Verify: All calculations match backend data
 
-### 4.3 Revenue Analytics (NEW FEATURE)
-- [ ] **Access Revenue Tab**
-  1. Click "Revenue" option in admin sidebar
-  2. Verify: Revenue tab opens
-  3. Verify: Page loads without errors
-
-- [ ] **View Revenue Stats Cards**
-  1. Verify: Food Revenue card shows total
-  2. Verify: Subscription Revenue card shows total
-  3. Verify: Total Revenue card shows sum
-  4. Verify: All values update with fresh data
-
-- [ ] **View Combined Revenue Trend Chart**
-  1. In Revenue tab, view "Combined Trend" tab
-  2. Verify: Line chart displays 7-day revenue trend
+### 4.3 Revenue Analytics
+- [ ] **Access Revenue Analytics**
+  1. Open analytics section
+  2. Verify: Revenue endpoints respond
+  3. Verify: Charts render without errors
   3. Verify: Tooltip shows data on hover
   4. Verify: X-axis shows dates
   5. Verify: Y-axis shows rupee amounts properly scaled
@@ -415,25 +336,19 @@ Admin Account:
 - [ ] **View User Details**
   1. Click on a user
   2. Verify: Profile information displayed
-  3. Verify: Order history visible
-  4. Verify: Subscription status shown
+  3. Verify: Status and role shown
 
 - [ ] **Manage User Account**
   1. From user details, verify edit option
   2. Update user information if needed
   3. Verify: Changes saved
 
-- [ ] **View User Activity**
-  1. Click "Activity" or similar tab
-  2. Verify: User's order history shown
-  3. Verify: Login/logout timestamps
-
 ### 4.5 Restaurant Management
 - [ ] **View All Restaurants**
   1. Navigate to "Restaurants" section in sidebar
   2. Verify: All restaurants listed
-  3. Verify: Restaurant name, email, phone shown
-  4. Verify: Active/Inactive status visible
+  3. Verify: Restaurant name, owner, phone shown
+  4. Verify: Status visible (pending/approved)
 
 - [ ] **View Restaurant Details**
   1. Click on a restaurant
@@ -450,16 +365,10 @@ Admin Account:
   6. Verify: Success notification shown
   7. Verify: Restaurant update reflected on public page
 
-- [ ] **Deactivate/Activate Restaurant**
-  1. From restaurant edit modal, toggle status
+- [ ] **Update Restaurant Status**
+  1. From restaurant edit modal, update status (pending/approved)
   2. Click "Save"
   3. Verify: Status changes
-  4. Verify: Inactive restaurants don't appear in user searches
-
-- [ ] **View Restaurant Revenue**
-  1. From restaurant details, click "Revenue" tab
-  2. Verify: Food and subscription revenue shown
-  3. Verify: Order count and subscription count displayed
 
 ### 4.6 Order Management
 - [ ] **View All Orders**
@@ -468,7 +377,7 @@ Admin Account:
   3. Verify: Order ID, customer, amount, date shown
 
 - [ ] **Filter Orders**
-  1. Filter by: Status (Pending, Delivered), Date Range
+  1. Filter by: Status (Placed, Pending, Confirmed, Preparing, Ready, Out for Delivery, Delivered)
   2. Verify: Correct orders displayed for each filter
 
 - [ ] **View Order Details**
@@ -482,7 +391,6 @@ Admin Account:
   1. Click order
   2. Update status manually if needed
   3. Verify: Changes reflected to customer
-  4. Verify: Audit log shows who made change
 
 ### 4.7 Analytics & Reports
 - [ ] **View Dashboard Graphs**
@@ -490,19 +398,6 @@ Admin Account:
   2. Verify: 7 days of data shown
   3. Check order distribution chart
   4. Verify: Charts render correctly
-
-- [ ] **Analytics by Time Period**
-  1. Select date range filter
-  2. Verify: Analytics update for selected period
-  3. Verify: Comparison with previous period (if available)
-
-- [ ] **Generate Reports**
-  1. Click "Generate Reports" action
-  2. Select report type (Revenue, Orders, etc.)
-  3. Select date range
-  4. Click "Generate"
-  5. Verify: Report downloads as PDF/CSV
-  6. Verify: Report contains accurate data
 
 ### 4.8 Staff Management
 - [ ] **View All Staff**
@@ -512,46 +407,16 @@ Admin Account:
 
 - [ ] **View Staff Details**
   1. Click on staff member
-  2. Verify: Email, phone, restaurant displayed
-  3. Verify: Delivery count/stats shown
+  2. Verify: Email, role, restaurant displayed
 
-- [ ] **Deactivate Staff**
-  1. Click "Deactivate" button
+- [ ] **Remove Staff**
+  1. Click "Delete" or "Remove" action
   2. Confirm action
-  3. Verify: Staff can no longer login
-
-### 4.9 Subscription Management
-- [ ] **View All Subscriptions**
-  1. Navigate to "Subscriptions" section
-  2. Verify: List of subscription plans
-  3. Verify: Price, duration, discount shown
-
-- [ ] **Edit Subscription**
-  1. Click "Edit" on a subscription
-  2. Update price or discount
-  3. Click "Save"
-  4. Verify: Updates reflected for new subscribers
-
-- [ ] **View Subscriber List**
-  1. Click on a subscription plan
-  2. Verify: List of users with this subscription
-  3. Verify: Active status and expiry date shown
+  3. Verify: Staff removed from list
 
 ---
 
 ## 5. CROSS-FUNCTIONAL TESTING
-
-### 5.1 Real-time Updates
-- [ ] **Order Status Updates**
-  1. Place order as customer
-  2. From restaurant/staff side, update status
-  3. Verify: Customer sees status change within 1-2 seconds
-  4. Verify: No page refresh needed
-
-- [ ] **Notification System**
-  1. Verify: Customer gets notified of order confirmation
-  2. Verify: Customer gets notified when order is delivered
-  3. Verify: Restaurant notified of new orders
 
 ### 5.2 Payment & Transactions
 - [ ] **Successful Payment**
@@ -566,10 +431,6 @@ Admin Account:
   3. Verify: User can retry
   4. Verify: Order not created until payment succeeds
 
-- [ ] **Cash on Delivery**
-  1. Complete order with COD option
-  2. Verify: Order created with COD status
-  3. Verify: Payment pending until confirmed
 
 ### 5.3 URL & Routing
 - [ ] **Production URL Routing**
@@ -583,34 +444,14 @@ Admin Account:
   2. Verify: Switching API URL works correctly
   3. Verify: Error handling for unreachable API
 
-### 5.4 Subscription Benefits
-- [ ] **Discount Application in Food Ordering**
-  1. User with active subscription orders food
-  2. Verify: Discount automatically applied at checkout
-  3. Verify: Discount percentage shown clearly
-  4. Verify: Total reflects discounted amount
-
-- [ ] **Subscription Renewal**
-  1. Track subscription close to expiry date
-  2. Verify: Renewal reminders sent
-  3. Verify: Option to renew before expiry
-
 ---
 
 ## 6. EDGE CASES & ERROR HANDLING
-
-- [ ] **Insufficient Minimum Order Amount**
-  1. Try to checkout with amount below minimum
-  2. Verify: Error message shown
-  3. Verify: Clear indication of required minimum
 
 - [ ] **Item Out of Stock**
   1. Verify: Out of stock items not orderable
   2. Verify: Clear indication in UI
 
-- [ ] **Delivery Address Too Far**
-  1. Try to order with delivery address outside service area
-  2. Verify: Error message shown
 
 - [ ] **Expired Session**
   1. Login and wait for token expiration

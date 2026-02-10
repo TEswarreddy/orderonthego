@@ -82,15 +82,15 @@ A complete subscription system has been implemented for restaurants with three t
 **File:** `backend/src/middlewares/subscriptionMiddleware.js`
 
 **Available Middleware:**
-- `checkActiveSubscription` - Verifies subscription is active
-- `checkMenuItemLimit` - Enforces max menu items limit (applied to food creation)
-- `checkOrderLimit` - Enforces daily order limit
-- `checkAnalyticsAccess` - Restricts analytics to BASIC/PREMIUM plans
+- `checkActiveSubscription` - Verifies subscription is active (restaurant owners only)
+- `checkMenuItemLimit` - Enforces max menu items limit (restaurant owners only)
+- `checkOrderLimit` - Enforces daily order limit (restaurant owners only)
+- `checkAnalyticsAccess` - Restricts analytics to BASIC/PREMIUM plans (restaurant owners only)
 - `trackFeatureUsage(featureName)` - Logs feature usage for analytics
 
-**Usage Example:**
+**Usage Example (current):**
 ```javascript
-router.post("/", protect, authorize("RESTAURANT"), checkMenuItemLimit, addFood);
+router.post("/", protect, authorize("RESTAURANT", "STAFF"), checkMenuItemLimit, addFood);
 ```
 
 ---

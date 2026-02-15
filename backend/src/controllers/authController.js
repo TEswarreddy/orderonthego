@@ -56,55 +56,69 @@ exports.register = async (req, res) => {
   }
 
   // Send email verification code
-  try {
-    const msg = {
-      to: email,
-      from: process.env.SENDGRID_SENDER,
-      subject: "Verify Your Email - Order On The Go",
-      html: `
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <style>
-            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-            .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-            .header { background: linear-gradient(135deg, #f97316 0%, #dc2626 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
-            .content { background: #ffffff; padding: 30px; border: 1px solid #e5e7eb; border-top: none; }
-            .code-box { background: #f3f4f6; border: 2px dashed #f97316; padding: 20px; text-align: center; margin: 20px 0; border-radius: 8px; }
-            .code { font-size: 32px; font-weight: bold; color: #f97316; letter-spacing: 5px; }
-            .footer { text-align: center; color: #6b7280; font-size: 12px; padding: 20px; }
-          </style>
-        </head>
-        <body>
-          <div class="container">
-            <div class="header">
-              <h1>🍽️ Welcome to Order On The Go!</h1>
-            </div>
-            <div class="content">
-              <h2>Hello ${username}!</h2>
-              <p>Thank you for registering with us. Please use the verification code below to verify your email address:</p>
-              
-              <div class="code-box">
-                <div class="code">${emailVerificationCode}</div>
+  if (!process.env.SENDGRID_API_KEY || !process.env.SENDGRID_SENDER) {
+    console.warn("⚠️ SendGrid not configured. Email verification skipped.");
+    console.warn("Missing:", {
+      SENDGRID_API_KEY: !process.env.SENDGRID_API_KEY ? "NOT SET" : "SET",
+      SENDGRID_SENDER: !process.env.SENDGRID_SENDER ? "NOT SET" : "SET"
+    });
+  } else {
+    try {
+      const msg = {
+        to: email,
+        from: process.env.SENDGRID_SENDER,
+        subject: "Verify Your Email - Order On The Go",
+        html: `
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <style>
+              body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+              .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+              .header { background: linear-gradient(135deg, #f97316 0%, #dc2626 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+              .content { background: #ffffff; padding: 30px; border: 1px solid #e5e7eb; border-top: none; }
+              .code-box { background: #f3f4f6; border: 2px dashed #f97316; padding: 20px; text-align: center; margin: 20px 0; border-radius: 8px; }
+              .code { font-size: 32px; font-weight: bold; color: #f97316; letter-spacing: 5px; }
+              .footer { text-align: center; color: #6b7280; font-size: 12px; padding: 20px; }
+            </style>
+          </head>
+          <body>
+            <div class="container">
+              <div class="header">
+                <h1>🍽️ Welcome to Order On The Go!</h1>
               </div>
-              
-              <p><strong>This code will expire in 10 minutes.</strong></p>
-              <p>If you didn't create this account, please ignore this email.</p>
-              
-              <p>Best regards,<br>Order On The Go Team</p>
+              <div class="content">
+                <h2>Hello ${username}!</h2>
+                <p>Thank you for registering with us. Please use the verification code below to verify your email address:</p>
+                
+                <div class="code-box">
+                  <div class="code">${emailVerificationCode}</div>
+                </div>
+                
+                <p><strong>This code will expire in 10 minutes.</strong></p>
+                <p>If you didn't create this account, please ignore this email.</p>
+                
+                <p>Best regards,<br>Order On The Go Team</p>
+              </div>
+              <div class="footer">
+                <p>© 2026 Order On The Go. All rights reserved.</p>
+              </div>
             </div>
-            <div class="footer">
-              <p>© 2026 Order On The Go. All rights reserved.</p>
-            </div>
-          </div>
-        </body>
-        </html>
-      `,
-    };
+          </body>
+          </html>
+        `,
+      };
 
-    await sgMail.send(msg);
-  } catch (emailError) {
-    console.error("Failed to send verification email:", emailError);
+      await sgMail.send(msg);
+      console.log("✅ Email sent successfully to:", email);
+    } catch (emailError) {
+      console.error("❌ Failed to send verification email:", {
+        error: emailError.message,
+        code: emailError.code,
+        toEmail: email,
+        fromEmail: process.env.SENDGRID_SENDER
+      });
+    }
   }
 
   res.status(201).json({

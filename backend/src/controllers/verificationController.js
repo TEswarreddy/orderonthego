@@ -82,15 +82,42 @@ exports.sendEmailVerification = async (req, res) => {
       `,
     };
 
+    // Validate SendGrid configuration
+    if (!process.env.SENDGRID_API_KEY) {
+      console.error("❌ SENDGRID_API_KEY not configured");
+      return res.status(500).json({ 
+        message: "Email service not configured. Please contact support.",
+        error: "Missing SENDGRID_API_KEY"
+      });
+    }
+    if (!process.env.SENDGRID_SENDER) {
+      console.error("❌ SENDGRID_SENDER not configured");
+      return res.status(500).json({ 
+        message: "Email service not configured. Please contact support.",
+        error: "Missing SENDGRID_SENDER"
+      });
+    }
+
     await sgMail.send(msg);
+    console.log("✅ Verification email sent to:", email);
 
     res.json({ 
       message: "Verification code sent to your email",
       expiresIn: "10 minutes"
     });
   } catch (error) {
-    console.error("Error sending email verification:", error);
-    res.status(500).json({ message: "Failed to send verification code" });
+    console.error("❌ Error sending email verification:", {
+      message: error.message,
+      code: error.code,
+      response: error.response?.body,
+      toEmail: email,
+      sender: process.env.SENDGRID_SENDER
+    });
+    res.status(500).json({ 
+      message: "Failed to send verification code",
+      error: error.message,
+      details: process.env.NODE_ENV === 'development' ? error.response?.body : undefined
+    });
   }
 };
 

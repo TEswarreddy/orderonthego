@@ -21,7 +21,8 @@ const allowedOrigin = (process.env.FRONTEND_BASE_URL || "http://localhost:5173")
 
 app.use(cors({
   origin: allowedOrigin,
-  credentials: true
+  credentials: true,
+  exposedHeaders: ['x-rtb-fingerprint-id', 'Content-Length', 'X-JSON-Response']
 }));
 
 app.use(express.json());

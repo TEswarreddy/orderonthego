@@ -32,6 +32,7 @@ const OrdersTab = ({
         <option value="preparing">Preparing</option>
         <option value="ready">Ready</option>
         <option value="delivered">Delivered</option>
+        <option value="cancelled">Cancelled</option>
       </select>
       {(orderSearch || orderFilter !== "all") && (
         <button
@@ -83,6 +84,8 @@ const OrdersTab = ({
                         className={`px-3 py-1 rounded-full text-sm font-semibold ${
                           order.status?.toLowerCase() === "delivered"
                             ? "bg-green-100 text-green-800"
+                            : order.status?.toLowerCase() === "cancelled"
+                            ? "bg-red-100 text-red-800"
                             : order.status?.toLowerCase() === "pending"
                             ? "bg-yellow-100 text-yellow-800"
                             : order.status?.toLowerCase() === "preparing"

@@ -41,9 +41,12 @@ const normalizeStatus = (status) => {
     "READY",
     "OUT_FOR_DELIVERY",
     "DELIVERED",
+    "CANCELLED",
   ]);
   return allowed.has(normalized) ? normalized : status;
 };
+
+const cancellableStatuses = new Set(["PLACED", "PENDING", "CONFIRMED"]);
 
 const getStaffAllowedStatuses = (role) => {
   switch (role) {
@@ -406,6 +409,10 @@ exports.updateOrderStatus = async (req, res) => {
     return res.status(404).json({ message: "Order not found" });
   }
 
+  if (order.status === "CANCELLED") {
+    return res.status(400).json({ message: "Cancelled orders cannot be updated" });
+  }
+
   const nextStatus = normalizeStatus(req.body.status);
 
   if (req.user.userType === "STAFF") {
@@ -470,6 +477,31 @@ exports.updateOrderStatus = async (req, res) => {
   }
 
   console.log(`📨 === STATUS UPDATE EMAIL PROCESS COMPLETE === 📨\n`);
+
+  res.json(order);
+};
+
+// USER CANCEL ORDER
+exports.cancelOrder = async (req, res) => {
+  const order = await Order.findById(req.params.id);
+  if (!order) {
+    return res.status(404).json({ message: "Order not found" });
+  }
+
+  if (order.userId.toString() !== req.user._id.toString()) {
+    return res.status(403).json({ message: "Not allowed to cancel this order" });
+  }
+
+  if (order.status === "CANCELLED") {
+    return res.status(400).json({ message: "Order is already cancelled" });
+  }
+
+  if (!cancellableStatuses.has(order.status)) {
+    return res.status(400).json({ message: "Order can no longer be cancelled" });
+  }
+
+  order.status = "CANCELLED";
+  await order.save();
 
   res.json(order);
 };

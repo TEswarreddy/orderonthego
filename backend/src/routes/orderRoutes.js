@@ -6,12 +6,14 @@ const {
   getRestaurantOrders,
   updateOrderStatus,
   requestStatusChange,
+  cancelOrder,
 } = require("../controllers/orderController");
 
 const { protect, authorize } = require("../middlewares/authMiddleware");
 
 router.post("/", protect, authorize("USER"), placeOrder);
 router.get("/my-orders", protect, authorize("USER"), getUserOrders);
+router.put("/:id/cancel", protect, authorize("USER"), cancelOrder);
 router.get(
   "/restaurant",
   protect,

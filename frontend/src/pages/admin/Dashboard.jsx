@@ -792,6 +792,7 @@ const AdminDashboard = () => {
                   <option value="PREPARING">Preparing</option>
                   <option value="OUT_FOR_DELIVERY">Out for Delivery</option>
                   <option value="DELIVERED">Delivered</option>
+                  <option value="CANCELLED">Cancelled</option>
                 </select>
               </div>
             </div>

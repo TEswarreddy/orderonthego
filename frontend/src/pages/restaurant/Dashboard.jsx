@@ -101,6 +101,7 @@ const RestaurantDashboard = () => {
     { value: "READY", label: "Ready" },
     { value: "OUT_FOR_DELIVERY", label: "Out for Delivery" },
     { value: "DELIVERED", label: "Delivered" },
+    { value: "CANCELLED", label: "Cancelled" },
   ];
 
   const getAllowedStatusOptions = () => {
@@ -148,7 +149,7 @@ const RestaurantDashboard = () => {
 
       setStats({
         totalItems: foodsRes.data?.length || 0,
-        activeOrders: restaurantOrders.filter((o) => o.status?.toLowerCase() !== "delivered").length,
+        activeOrders: restaurantOrders.filter((o) => !["delivered", "cancelled"].includes(o.status?.toLowerCase())).length,
         totalRevenue,
         averageRating: averageRating.toFixed(1),
       });
@@ -204,7 +205,7 @@ const RestaurantDashboard = () => {
 
       setStats(prev => ({
         ...prev,
-        activeOrders: restaurantOrders.filter((o) => o.status?.toLowerCase() !== "delivered").length,
+        activeOrders: restaurantOrders.filter((o) => !["delivered", "cancelled"].includes(o.status?.toLowerCase())).length,
         totalRevenue,
       }));
 

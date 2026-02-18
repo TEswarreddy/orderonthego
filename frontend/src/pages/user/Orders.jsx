@@ -9,6 +9,8 @@ const Orders = () => {
   const [loading, setLoading] = useState(true);
   const [expandedOrder, setExpandedOrder] = useState(null);
   const [filterStatus, setFilterStatus] = useState("all");
+  const [cancellingOrderId, setCancellingOrderId] = useState(null);
+  const [cancelError, setCancelError] = useState("");
 
   useEffect(() => {
     fetchOrders();
@@ -23,6 +25,23 @@ const Orders = () => {
       console.error("Failed to fetch orders:", err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const isCancellable = (status) => ["placed", "pending", "confirmed"].includes(status?.toLowerCase());
+
+  const handleCancelOrder = async (orderId) => {
+    if (!window.confirm("Cancel this order? This action cannot be undone.")) return;
+    try {
+      setCancelError("");
+      setCancellingOrderId(orderId);
+      const res = await axios.put(`/orders/${orderId}/cancel`);
+      setOrders((prev) => prev.map((order) => (order._id === orderId ? res.data : order)));
+    } catch (err) {
+      const message = err.response?.data?.message || "Failed to cancel order";
+      setCancelError(message);
+    } finally {
+      setCancellingOrderId(null);
     }
   };
 
@@ -63,6 +82,12 @@ const Orders = () => {
     <div className="min-h-screen bg-gray-50 py-8 px-4">
       <div className="max-w-4xl mx-auto">
         <h1 className="text-3xl font-bold text-gray-800 mb-8">My Orders</h1>
+
+        {cancelError && (
+          <div className="mb-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+            {cancelError}
+          </div>
+        )}
 
         {/* Filter Tabs */}
         <div className="flex gap-2 mb-6 overflow-x-auto pb-2">
@@ -164,25 +189,45 @@ const Orders = () => {
                     <div>
                       <h3 className="font-semibold text-gray-800 mb-4">Order Timeline</h3>
                       <div className="space-y-3">
-                        {["Order Placed", "Confirmed", "Preparing", "Ready for Delivery", "Delivered"].map((step, idx) => {
-                          const statusMapping = ["pending", "confirmed", "preparing", "ready", "delivered"];
-                          const currentStatusIndex = statusMapping.indexOf(order.status?.toLowerCase());
-                          const isCompleted = idx <= currentStatusIndex;
+                        {order.status?.toLowerCase() === "cancelled" ? (
+                          <div className="flex items-center gap-4">
+                            <div className="w-3 h-3 rounded-full bg-red-500"></div>
+                            <span className="font-semibold text-red-700">Cancelled</span>
+                            <AlertCircle size={18} className="text-red-500 ml-auto" />
+                          </div>
+                        ) : (
+                          ["Order Placed", "Pending", "Confirmed", "Preparing", "Ready for Delivery", "Delivered"].map((step, idx) => {
+                            const statusMapping = ["placed", "pending", "confirmed", "preparing", "ready", "delivered"];
+                            const currentStatusIndex = statusMapping.indexOf(order.status?.toLowerCase());
+                            const isCompleted = idx <= currentStatusIndex && currentStatusIndex !== -1;
 
-                          return (
-                            <div key={idx} className="flex items-center gap-4">
-                              <div
-                                className={`w-3 h-3 rounded-full ${isCompleted ? "bg-green-500" : "bg-gray-300"}`}
-                              ></div>
-                              <span className={isCompleted ? "font-semibold text-gray-800" : "text-gray-500"}>
-                                {step}
-                              </span>
-                              {isCompleted && <CheckCircle size={18} className="text-green-500 ml-auto" />}
-                            </div>
-                          );
-                        })}
+                            return (
+                              <div key={idx} className="flex items-center gap-4">
+                                <div
+                                  className={`w-3 h-3 rounded-full ${isCompleted ? "bg-green-500" : "bg-gray-300"}`}
+                                ></div>
+                                <span className={isCompleted ? "font-semibold text-gray-800" : "text-gray-500"}>
+                                  {step}
+                                </span>
+                                {isCompleted && <CheckCircle size={18} className="text-green-500 ml-auto" />}
+                              </div>
+                            );
+                          })
+                        )}
                       </div>
                     </div>
+
+                    {isCancellable(order.status) && (
+                      <div className="flex justify-end">
+                        <button
+                          onClick={() => handleCancelOrder(order._id)}
+                          disabled={cancellingOrderId === order._id}
+                          className="px-4 py-2 rounded-lg font-semibold text-white bg-red-500 hover:bg-red-600 transition disabled:opacity-60"
+                        >
+                          {cancellingOrderId === order._id ? "Cancelling..." : "Cancel Order"}
+                        </button>
+                      </div>
+                    )}
 
                     {/* Delivery Address */}
                     <div className="bg-white p-4 rounded-lg border flex gap-3">

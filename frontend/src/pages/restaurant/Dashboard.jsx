@@ -65,6 +65,7 @@ const RestaurantDashboard = () => {
     price: "",
     description: "",
     category: "biryani",
+    isVeg: true,
   });
 
   useEffect(() => {
@@ -250,7 +251,7 @@ const RestaurantDashboard = () => {
   };
 
   const handleAddFood = async () => {
-    if (!newFood.title || !newFood.price || !newFood.category) {
+    if (!newFood.title || !newFood.price || !newFood.category || typeof newFood.isVeg !== "boolean") {
       alert("Please fill all required fields");
       return;
     }
@@ -276,7 +277,7 @@ const RestaurantDashboard = () => {
       });
       setFoods([...foods, res.data]);
       setStats(prev => ({ ...prev, totalItems: prev.totalItems + 1 }));
-      setNewFood({ title: "", price: "", description: "", category: "biryani" });
+      setNewFood({ title: "", price: "", description: "", category: "biryani", isVeg: true });
       setShowAddForm(false);
       alert("✅ Food item added successfully!");
       fetchRestaurantData(); // Refresh to update subscription usage
@@ -305,12 +306,13 @@ const RestaurantDashboard = () => {
       price: food.price.toString(),
       description: food.description || "",
       category: food.category,
+      isVeg: typeof food.isVeg === "boolean" ? food.isVeg : true,
     });
     setShowEditForm(true);
   };
 
   const handleUpdateFood = async () => {
-    if (!newFood.title || !newFood.price || !newFood.category) {
+    if (!newFood.title || !newFood.price || !newFood.category || typeof newFood.isVeg !== "boolean") {
       alert("Please fill all required fields");
       return;
     }
@@ -323,7 +325,7 @@ const RestaurantDashboard = () => {
       setFoods(foods.map((f) => (f._id === editingFood._id ? res.data : f)));
       setEditingFood(null);
       setShowEditForm(false);
-      setNewFood({ title: "", price: "", description: "", category: "biryani" });
+      setNewFood({ title: "", price: "", description: "", category: "biryani", isVeg: true });
       alert("✅ Food item updated successfully!");
       fetchRestaurantData();
     } catch (err) {

@@ -42,12 +42,19 @@ exports.addFood = async (req, res) => {
       menuType,
       mainImg,
       discount,
+      isVeg,
     } = req.body;
 
     // ✅ BACKEND VALIDATION (CRITICAL)
     if (!title || price === undefined) {
       return res.status(400).json({
         message: "Food title and price are required",
+      });
+    }
+
+    if (typeof isVeg !== "boolean") {
+      return res.status(400).json({
+        message: "Veg/Non-Veg selection is required",
       });
     }
 
@@ -72,6 +79,7 @@ exports.addFood = async (req, res) => {
       menuType,
       mainImg,
       discount,
+      isVeg,
     });
 
     res.status(201).json(food);
@@ -110,7 +118,7 @@ exports.getFoodsByRestaurant = async (req, res) => {
 // Update food item (Restaurant only)
 exports.updateFood = async (req, res) => {
   try {
-    const { title, price, description, category } = req.body;
+    const { title, price, description, category, isVeg } = req.body;
     const food = await Food.findById(req.params.id);
 
     if (!food) {
@@ -128,6 +136,7 @@ exports.updateFood = async (req, res) => {
     if (price !== undefined) food.price = Number(price);
     if (description) food.description = description;
     if (category) food.category = category;
+    if (typeof isVeg === "boolean") food.isVeg = isVeg;
 
     await food.save();
     res.json(food);

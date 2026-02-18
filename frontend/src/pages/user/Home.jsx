@@ -14,6 +14,7 @@ const Home = () => {
   // Filter & Search States
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
+  const [selectedFoodType, setSelectedFoodType] = useState("all");
   const [priceRange, setPriceRange] = useState([0, 1000]);
   const [sortBy, setSortBy] = useState("popularity");
   const [favorites, setFavorites] = useState([]);
@@ -56,8 +57,12 @@ const Home = () => {
       const matchesCategory =
         selectedCategory === "all" || food.category === selectedCategory;
       const matchesPrice = food.price >= priceRange[0] && food.price <= priceRange[1];
+      const matchesFoodType =
+        selectedFoodType === "all" ||
+        (selectedFoodType === "veg" && food.isVeg === true) ||
+        (selectedFoodType === "nonveg" && food.isVeg === false);
 
-      return matchesSearch && matchesCategory && matchesPrice;
+      return matchesSearch && matchesCategory && matchesPrice && matchesFoodType;
     });
 
     // Sort
@@ -70,7 +75,7 @@ const Home = () => {
     }
 
     return result;
-  }, [foods, searchQuery, selectedCategory, priceRange, sortBy]);
+  }, [foods, searchQuery, selectedCategory, priceRange, sortBy, selectedFoodType]);
 
   const toggleFavorite = (foodId) => {
     setFavorites((prev) =>
@@ -271,6 +276,28 @@ const Home = () => {
                 </div>
               </div>
 
+              {/* Veg / Non-Veg */}
+              <div className="mb-6">
+                <h3 className="font-semibold text-gray-700 mb-3">Food Type</h3>
+                <div className="space-y-2">
+                  {["all", "veg", "nonveg"].map((type) => (
+                    <label key={type} className="flex items-center cursor-pointer">
+                      <input
+                        type="radio"
+                        name="foodType"
+                        value={type}
+                        checked={selectedFoodType === type}
+                        onChange={(e) => setSelectedFoodType(e.target.value)}
+                        className="w-4 h-4 text-orange-500"
+                      />
+                      <span className="ml-2 text-gray-700 capitalize">
+                        {type === "all" ? "All" : type === "veg" ? "Veg" : "Non-Veg"}
+                      </span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
               {/* Price Range */}
               <div className="mb-6">
                 <h3 className="font-semibold text-gray-700 mb-3">Price Range</h3>
@@ -313,6 +340,7 @@ const Home = () => {
                 onClick={() => {
                   setSearchQuery("");
                   setSelectedCategory("all");
+                  setSelectedFoodType("all");
                   setPriceRange([0, 1000]);
                   setSortBy("popularity");
                 }}

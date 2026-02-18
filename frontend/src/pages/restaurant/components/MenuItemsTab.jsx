@@ -77,6 +77,14 @@ const MenuItemsTab = ({
             <option value="dessert">Dessert</option>
             <option value="beverage">Beverage</option>
           </select>
+          <select
+            value={newFood.isVeg === false ? "nonveg" : "veg"}
+            onChange={(e) => setNewFood({ ...newFood, isVeg: e.target.value === "veg" })}
+            className="bg-white text-gray-900 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+          >
+            <option value="veg">Veg</option>
+            <option value="nonveg">Non-Veg</option>
+          </select>
         </div>
 
         <textarea
@@ -149,6 +157,14 @@ const MenuItemsTab = ({
             <option value="dessert">Dessert</option>
             <option value="beverage">Beverage</option>
           </select>
+          <select
+            value={newFood.isVeg === false ? "nonveg" : "veg"}
+            onChange={(e) => setNewFood({ ...newFood, isVeg: e.target.value === "veg" })}
+            className="bg-white text-gray-900 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+          >
+            <option value="veg">Veg</option>
+            <option value="nonveg">Non-Veg</option>
+          </select>
         </div>
 
         <textarea
@@ -170,7 +186,7 @@ const MenuItemsTab = ({
             onClick={() => {
               setShowEditForm(false);
               setEditingFood(null);
-              setNewFood({ title: "", price: "", description: "", category: "biryani" });
+              setNewFood({ title: "", price: "", description: "", category: "biryani", isVeg: true });
             }}
             className="bg-gray-400 hover:bg-gray-500 text-white px-6 py-2 rounded-lg transition font-semibold"
           >
@@ -253,6 +269,11 @@ const MenuItemsTab = ({
                   <div>
                     <p className="text-sm text-gray-600">Category</p>
                     <p className="font-semibold text-gray-800 capitalize">{food.category || "Food"}</p>
+                    {typeof food.isVeg === "boolean" && (
+                      <p className={`mt-1 text-xs font-semibold ${food.isVeg ? "text-green-700" : "text-red-700"}`}>
+                        {food.isVeg ? "Veg" : "Non-Veg"}
+                      </p>
+                    )}
                   </div>
                 </div>
 
